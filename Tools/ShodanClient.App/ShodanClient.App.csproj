@@ -1,0 +1,71 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<RootNamespace>ShodanClient.App</RootNamespace>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<ApplicationIcon>Assets\app.ico</ApplicationIcon>
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Native AOT publish">
+		<PublishAot>true</PublishAot>
+		<SelfContained>true</SelfContained>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Non-packable app overrides">
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<!-- CA1716: INotificationService.Error/Info intentionally mirror common toast-API naming
+				 (Info/Success/Warning/Error); the CLS "reserved keyword" concern doesn't apply to an
+				 app that ships no public API for other .NET languages to implement against.
+				 IL2104/IL3053: rollup trim/AOT-analysis warnings for the whole 'Avalonia.Controls.DataGrid'
+				 and 'FluentAvalonia' assemblies, which aren't yet fully trim/AOT-annotated upstream. This
+				 mirrors the precedent in the root Directory.Build.props (Polly/ObjectPool not annotated
+				 IsAotCompatible=true upstream): a real `dotnet publish -r win-x64 -c Release` was verified
+				 clean of IL2026/IL3050 caused by OUR OWN reflection-binding usage (every ItemsControl/
+				 DataTemplate in this project now uses compiled bindings; see the App source for `x:DataType`
+				 on every DataTemplate/DataGridColumn). Only these two third-party rollup codes are suppressed. -->
+		<NoWarn>$(NoWarn);CA1716;IL2104;IL3053</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Native AOT third-party warning tolerance">
+		<!-- Once our own code was free of reflection bindings, ILC's deeper (per-assembly) trim/AOT
+				 analysis surfaced two more IL2026 instances that are NOT ours: they point at
+				 FluentAvaloniaUI 3.0.0's own precompiled control themes (Controls.axaml and
+				 DataGridRowGroupHeaderStyles.axaml under the package author's own build tree), which use
+				 ReflectionBinding internally. We cannot edit a third-party package's compiled resources, so
+				 (same rationale as the IL2104/IL3053 NoWarn above) ILC's own warnings-as-errors promotion is
+				 disabled for this project only. This is scoped to the native-publish linker step
+				 ($(IlcTreatWarningsAsErrors)) and does NOT affect the C# compiler's own trim/AOT analyzers
+				 (EnableTrimAnalyzer/EnableAotAnalyzer, from IsAotCompatible=true in Directory.Build.props),
+				 which still run as build errors under the root TreatWarningsAsErrors=true and continue to
+				 catch any reflection-binding regression in OUR OWN code during a plain `dotnet build`. -->
+		<IlcTreatWarningsAsErrors>false</IlcTreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="Assets\**"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Avalonia"/>
+		<PackageReference Include="Avalonia.Controls.DataGrid"/>
+		<PackageReference Include="Avalonia.Desktop"/>
+		<PackageReference Include="Avalonia.Themes.Fluent"/>
+		<PackageReference Include="Avalonia.Fonts.Inter"/>
+		<PackageReference Include="AvaloniaUI.DiagnosticsSupport">
+			<IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+			<PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="CommunityToolkit.Mvvm"/>
+		<PackageReference Include="FluentAvaloniaUI"/>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+		<PackageReference Include="Microsoft.Extensions.Hosting"/>
+		<PackageReference Include="System.Security.Cryptography.ProtectedData"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Src\ShodanClient\ShodanClient.csproj"/>
+	</ItemGroup>
+</Project>

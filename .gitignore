@@ -1,0 +1,43 @@
+## .NET / Visual Studio / Rider
+
+bin/
+obj/
+out/
+artifacts/
+
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+.vs/
+.idea/
+*.DotSettings.user
+
+# Rider
+*.sln.iml
+
+# Test results / coverage
+[Tt]est[Rr]esult*/
+[Cc]overage*/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+.nuget/
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.env
+appsettings.*.local.json

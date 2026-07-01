@@ -1,0 +1,45 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!-- Shodan's signature red/orange accent, used for the selected nav item, primary buttons and
+         highlighted facets/badges across every module. -->
+	<Color x:Key="ShodanAccentColor">#FA3D3D</Color>
+	<SolidColorBrush x:Key="ShodanAccentBrush" Color="{StaticResource ShodanAccentColor}" />
+
+	<x:Double x:Key="ShodanCornerRadiusMedium">8</x:Double>
+	<CornerRadius x:Key="ShodanCornerRadiusSmallValue">4</CornerRadius>
+	<CornerRadius x:Key="ShodanCornerRadiusMediumValue">8</CornerRadius>
+
+	<x:Double x:Key="ShodanSpacingXSmall">4</x:Double>
+	<x:Double x:Key="ShodanSpacingSmall">8</x:Double>
+	<x:Double x:Key="ShodanSpacingMedium">16</x:Double>
+	<x:Double x:Key="ShodanSpacingLarge">24</x:Double>
+
+	<!-- Thickness-typed counterparts of ShodanSpacing* for Margin/Padding/BorderThickness. These
+         properties are declared as Thickness (not double) on Decorator/Border/Layoutable, and
+         Avalonia's compiled-XAML setter casts a StaticResource value directly to the target
+         property's type rather than running it through Thickness's string TypeConverter — binding
+         Margin/Padding to an x:Double resource compiles fine but throws InvalidCastException at
+         runtime under PublishAot. Use these uniform Thickness resources for Margin/Padding/
+         BorderThickness instead; keep using ShodanSpacing* (the doubles) for genuinely double-typed
+         properties like StackPanel.Spacing/FontSize. -->
+	<Thickness x:Key="ShodanThicknessXSmall">4</Thickness>
+	<Thickness x:Key="ShodanThicknessSmall">8</Thickness>
+	<Thickness x:Key="ShodanThicknessMedium">16</Thickness>
+	<Thickness x:Key="ShodanThicknessLarge">24</Thickness>
+
+	<!-- Theme-aware translucent panel background for the card-style Borders used across
+         Setup/Settings/Diagnostics/Dashboard/the shell chrome. A hardcoded white overlay
+         (e.g. #14FFFFFF) is invisible-on-white once RequestedThemeVariant is Light (see
+         SettingsViewModel's theme picker), so both variants are declared explicitly here.
+         ThemeDictionaries entries are only resolved via DynamicResource, never StaticResource. -->
+	<ResourceDictionary.ThemeDictionaries>
+		<ResourceDictionary x:Key="Dark">
+			<SolidColorBrush x:Key="ShodanCardBackgroundBrush" Color="#14FFFFFF" />
+		</ResourceDictionary>
+		<ResourceDictionary x:Key="Light">
+			<SolidColorBrush x:Key="ShodanCardBackgroundBrush" Color="#14000000" />
+		</ResourceDictionary>
+	</ResourceDictionary.ThemeDictionaries>
+
+</ResourceDictionary>

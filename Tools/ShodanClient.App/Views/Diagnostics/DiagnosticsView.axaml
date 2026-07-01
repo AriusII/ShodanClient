@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Diagnostics"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="700"
+             x:Class="ShodanClient.App.Views.Diagnostics.DiagnosticsView"
+             x:DataType="vm:DiagnosticsViewModel">
+
+	<ScrollViewer>
+		<StackPanel Margin="{StaticResource ShodanThicknessLarge}"
+		            Spacing="{StaticResource ShodanSpacingLarge}"
+		            MaxWidth="760"
+		            HorizontalAlignment="Stretch">
+
+			<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource ShodanSpacingSmall}">
+				<TextBlock Grid.Column="0" Text="Diagnostics" FontSize="{StaticResource ShodanFontSizeTitle}"
+				           FontWeight="Bold" />
+				<ui:FAProgressRing Grid.Column="1"
+				                   IsVisible="{Binding IsBusy}"
+				                   IsActive="{Binding IsBusy}"
+				                   Width="20" Height="20"
+				                   VerticalAlignment="Center" />
+				<Button Grid.Column="2"
+				        Content="Refresh"
+				        Command="{Binding RefreshCommand}"
+				        IsEnabled="{Binding !IsBusy}" />
+			</Grid>
+
+			<!-- My IP -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}">
+					<TextBlock Text="My IP" FontSize="{StaticResource ShodanFontSizeLarge}" FontWeight="SemiBold" />
+					<TextBlock Text="{Binding MyIp}"
+					           FontFamily="{StaticResource ShodanMonospaceFont}"
+					           FontSize="{StaticResource ShodanFontSizeLarge}" />
+				</StackPanel>
+			</Border>
+
+			<!-- HTTP headers -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<TextBlock Text="HTTP Headers (as seen by Shodan)" FontSize="{StaticResource ShodanFontSizeLarge}"
+					           FontWeight="SemiBold" />
+					<ItemsControl ItemsSource="{Binding HttpHeaders}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="vm:HttpHeaderEntry">
+								<Grid ColumnDefinitions="220,*" Margin="0,2">
+									<TextBlock Grid.Column="0"
+									           Text="{Binding Name}"
+									           FontFamily="{StaticResource ShodanMonospaceFont}"
+									           FontWeight="SemiBold"
+									           TextWrapping="Wrap" />
+									<TextBlock Grid.Column="1"
+									           Text="{Binding Value}"
+									           FontFamily="{StaticResource ShodanMonospaceFont}"
+									           TextWrapping="Wrap" />
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+			</Border>
+
+			<!-- Raw ApiInfo / usage limits -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}"
+				            IsVisible="{Binding ApiInfo, Converter={x:Static ObjectConverters.IsNotNull}}">
+					<TextBlock Text="API Plan &amp; Usage Limits" FontSize="{StaticResource ShodanFontSizeLarge}"
+					           FontWeight="SemiBold" />
+
+					<Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
+						<StackPanel Grid.Row="0" Grid.Column="0" Spacing="2" Margin="0,0,0,8">
+							<TextBlock Text="Plan" Opacity="0.6" FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<TextBlock Text="{Binding ApiInfo.Plan}" FontSize="{StaticResource ShodanFontSizeNormal}" />
+						</StackPanel>
+						<StackPanel Grid.Row="0" Grid.Column="1" Spacing="2" Margin="0,0,0,8">
+							<TextBlock Text="Query credits (limit)" Opacity="0.6"
+							           FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<TextBlock Text="{Binding QueryCreditsDisplay}"
+							           FontSize="{StaticResource ShodanFontSizeNormal}" />
+						</StackPanel>
+						<StackPanel Grid.Row="0" Grid.Column="2" Spacing="2" Margin="0,0,0,8">
+							<TextBlock Text="Scan credits (limit)" Opacity="0.6"
+							           FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<TextBlock Text="{Binding ScanCreditsDisplay}"
+							           FontSize="{StaticResource ShodanFontSizeNormal}" />
+						</StackPanel>
+
+						<StackPanel Grid.Row="1" Grid.Column="0" Spacing="2">
+							<TextBlock Text="HTTPS / Telnet" Opacity="0.6"
+							           FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<TextBlock Text="{Binding HttpsTelnetDisplay}"
+							           FontSize="{StaticResource ShodanFontSizeNormal}" />
+						</StackPanel>
+						<StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+							<TextBlock Text="Unlocked" Opacity="0.6" FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<TextBlock Text="{Binding UnlockedDisplay}"
+							           FontSize="{StaticResource ShodanFontSizeNormal}" />
+						</StackPanel>
+						<StackPanel Grid.Row="1" Grid.Column="2" Spacing="2">
+							<TextBlock Text="Monitored IPs" Opacity="0.6"
+							           FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<TextBlock Text="{Binding MonitoredIpsDisplay}"
+							           FontSize="{StaticResource ShodanFontSizeNormal}" />
+						</StackPanel>
+					</Grid>
+				</StackPanel>
+			</Border>
+
+			<!-- App info -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}">
+					<TextBlock Text="About this app" FontSize="{StaticResource ShodanFontSizeLarge}"
+					           FontWeight="SemiBold" />
+					<TextBlock Text="{Binding AppVersion, StringFormat='ShodanClient.App v{0}'}" />
+				</StackPanel>
+			</Border>
+
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

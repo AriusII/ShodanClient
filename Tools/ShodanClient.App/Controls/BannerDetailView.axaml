@@ -1,0 +1,248 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:domain="using:ShodanClient.Domain.Search"
+             xmlns:common="using:ShodanClient.Domain.Common"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:scg="using:System.Collections.Generic"
+             mc:Ignorable="d"
+             x:Class="ShodanClient.App.Controls.BannerDetailView"
+             x:Name="Root"
+             x:DataType="domain:Banner">
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+		<conv:CertificateExpiredConverter x:Key="CertificateExpiredConverter" />
+		<conv:PortTransportToGlyphConverter x:Key="TransportGlyphConverter" />
+		<conv:VulnerabilitySeverityOrderConverter x:Key="VulnerabilitySeverityOrderConverter" />
+	</UserControl.Resources>
+
+	<ScrollViewer>
+		<StackPanel Spacing="{StaticResource ShodanSpacingMedium}" Margin="{StaticResource ShodanThicknessSmall}">
+
+			<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingMedium}">
+				<TextBlock Text="{Binding IpString}" FontWeight="Bold" FontSize="{StaticResource ShodanFontSizeLarge}" />
+				<TextBlock Text="{Binding Port}" FontSize="{StaticResource ShodanFontSizeLarge}" />
+				<StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center"
+				            IsVisible="{Binding Transport, Converter={StaticResource HasContentConverter}}">
+					<TextBlock Text="{Binding Transport, Converter={StaticResource TransportGlyphConverter}}" />
+					<TextBlock Text="{Binding Transport}" />
+				</StackPanel>
+				<TextBlock Text="{Binding Product}" VerticalAlignment="Center"
+				           IsVisible="{Binding Product, Converter={StaticResource HasContentConverter}}" />
+				<TextBlock Text="{Binding Version, StringFormat='v{0}'}" VerticalAlignment="Center" Opacity="0.8"
+				           IsVisible="{Binding Version, Converter={StaticResource HasContentConverter}}" />
+				<TextBlock Text="{Binding Organization}" VerticalAlignment="Center" Opacity="0.7" />
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingMedium}">
+				<TextBlock Text="{Binding Isp}" Opacity="0.6"
+				           IsVisible="{Binding Isp, Converter={StaticResource HasContentConverter}}" />
+				<TextBlock Text="{Binding Asn}" Opacity="0.6"
+				           IsVisible="{Binding Asn, Converter={StaticResource HasContentConverter}}" />
+				<TextBlock Text="{Binding OperatingSystem}" Opacity="0.6"
+				           IsVisible="{Binding OperatingSystem, Converter={StaticResource HasContentConverter}}" />
+			</StackPanel>
+
+			<TextBlock Text="{Binding Info}" Opacity="0.6" TextWrapping="Wrap"
+			           IsVisible="{Binding Info, Converter={StaticResource HasContentConverter}}" />
+
+			<StackPanel Orientation="Horizontal" Spacing="8"
+			            IsVisible="{Binding Location.CountryName, Converter={StaticResource HasContentConverter}}">
+				<TextBlock Text="{Binding Location.City}" />
+				<TextBlock Text="{Binding Location.CountryName}" />
+			</StackPanel>
+
+			<ItemsControl ItemsSource="{Binding Tags}"
+			              IsVisible="{Binding Tags, Converter={StaticResource HasContentConverter}}">
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<WrapPanel Orientation="Horizontal" />
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
+				<ItemsControl.ItemTemplate>
+					<DataTemplate x:DataType="x:String">
+						<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+
+			<StackPanel Orientation="Horizontal" Spacing="6"
+			            IsVisible="{Binding Hostnames, Converter={StaticResource HasContentConverter}}">
+				<TextBlock Text="Hostnames:" Opacity="0.6" VerticalAlignment="Center" />
+				<ItemsControl ItemsSource="{Binding Hostnames}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel Orientation="Horizontal" />
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="x:String">
+							<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="6"
+			            IsVisible="{Binding Domains, Converter={StaticResource HasContentConverter}}">
+				<TextBlock Text="Domains:" Opacity="0.6" VerticalAlignment="Center" />
+				<ItemsControl ItemsSource="{Binding Domains}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel Orientation="Horizontal" />
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="x:String">
+							<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="6"
+			            IsVisible="{Binding Cpe, Converter={StaticResource HasContentConverter}}">
+				<TextBlock Text="CPE:" Opacity="0.6" VerticalAlignment="Center" />
+				<ItemsControl ItemsSource="{Binding Cpe}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel Orientation="Horizontal" />
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="common:Cpe">
+							<controls:TagPill Text="{Binding Value}" Margin="0,0,4,4" />
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="6"
+			            IsVisible="{Binding Cpe23, Converter={StaticResource HasContentConverter}}">
+				<TextBlock Text="CPE 2.3:" Opacity="0.6" VerticalAlignment="Center" />
+				<ItemsControl ItemsSource="{Binding Cpe23}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel Orientation="Horizontal" />
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="common:Cpe">
+							<controls:TagPill Text="{Binding Value}" Margin="0,0,4,4" />
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</StackPanel>
+
+			<ItemsControl
+				ItemsSource="{Binding Vulnerabilities, Converter={StaticResource VulnerabilitySeverityOrderConverter}}"
+				IsVisible="{Binding Vulnerabilities, Converter={StaticResource HasContentConverter}}">
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<WrapPanel Orientation="Horizontal" />
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
+				<ItemsControl.ItemTemplate>
+					<DataTemplate>
+						<DataTemplate.DataType>
+							<x:Type TypeName="scg:KeyValuePair" x:TypeArguments="x:String, domain:Vulnerability" />
+						</DataTemplate.DataType>
+						<controls:VulnerabilityBadge CveId="{Binding Key}" Vulnerability="{Binding Value}"
+						                             OpenInExploitsCommand="{Binding OpenInExploitsCommand, ElementName=Root}"
+						                             Margin="0,0,4,4" />
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+
+			<TabControl Name="ModuleTabs">
+				<TabItem Header="Http" IsVisible="{Binding Http, Converter={StaticResource HasContentConverter}}">
+					<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}"
+					            Margin="{StaticResource ShodanThicknessSmall}">
+						<TextBlock Text="{Binding Http.Title}" FontWeight="Bold"
+						           IsVisible="{Binding Http.Title, Converter={StaticResource HasContentConverter}}" />
+						<StackPanel Orientation="Horizontal" Spacing="6"
+						            IsVisible="{Binding Http.Server, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Server:" Opacity="0.6" />
+							<TextBlock Text="{Binding Http.Server}" />
+						</StackPanel>
+						<StackPanel Orientation="Horizontal" Spacing="6"
+						            IsVisible="{Binding Http.Status, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Status:" Opacity="0.6" />
+							<TextBlock Text="{Binding Http.Status}" />
+						</StackPanel>
+						<StackPanel Orientation="Horizontal" Spacing="6"
+						            IsVisible="{Binding Http.Waf, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="WAF:" Opacity="0.6" />
+							<TextBlock Text="{Binding Http.Waf}" />
+						</StackPanel>
+					</StackPanel>
+				</TabItem>
+				<TabItem Header="Ssl" IsVisible="{Binding Ssl, Converter={StaticResource HasContentConverter}}">
+					<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}"
+					            Margin="{StaticResource ShodanThicknessSmall}">
+						<StackPanel Orientation="Horizontal" Spacing="6"
+						            IsVisible="{Binding Ssl.Cipher.Name, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Cipher:" Opacity="0.6" />
+							<TextBlock Text="{Binding Ssl.Cipher.Name}" />
+							<TextBlock Text="{Binding Ssl.Cipher.Bits, StringFormat='({0}-bit)'}" Opacity="0.6"
+							           IsVisible="{Binding Ssl.Cipher.Bits, Converter={StaticResource HasContentConverter}}" />
+						</StackPanel>
+						<StackPanel Orientation="Horizontal" Spacing="6"
+						            IsVisible="{Binding Ssl.Certificate.SignatureAlgorithm, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Signature:" Opacity="0.6" />
+							<TextBlock Text="{Binding Ssl.Certificate.SignatureAlgorithm}" />
+						</StackPanel>
+						<StackPanel Orientation="Horizontal" Spacing="6"
+						            IsVisible="{Binding Ssl.Certificate.Expires, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Expires:" Opacity="0.6" />
+							<TextBlock Text="{Binding Ssl.Certificate.Expires}" />
+						</StackPanel>
+						<Border
+							Background="{Binding Ssl.Certificate.Expired, Converter={StaticResource CertificateExpiredConverter}, ConverterParameter=Brush}"
+							CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+							Padding="8,2"
+							HorizontalAlignment="Left"
+							IsVisible="{Binding Ssl.Certificate, Converter={StaticResource HasContentConverter}}">
+							<TextBlock
+								Text="{Binding Ssl.Certificate.Expired, Converter={StaticResource CertificateExpiredConverter}, ConverterParameter=Text}"
+								Foreground="White"
+								FontSize="{StaticResource ShodanFontSizeSmall}" />
+						</Border>
+					</StackPanel>
+				</TabItem>
+				<TabItem Header="Dns" IsVisible="{Binding Dns, Converter={StaticResource HasContentConverter}}">
+					<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}"
+					            Margin="{StaticResource ShodanThicknessSmall}">
+						<StackPanel Orientation="Horizontal" Spacing="6"
+						            IsVisible="{Binding Dns.ResolverHostname, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Resolver:" Opacity="0.6" />
+							<TextBlock Text="{Binding Dns.ResolverHostname}" />
+						</StackPanel>
+						<StackPanel Orientation="Horizontal" Spacing="6"
+						            IsVisible="{Binding Dns.Software, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Software:" Opacity="0.6" />
+							<TextBlock Text="{Binding Dns.Software}" />
+						</StackPanel>
+						<StackPanel Orientation="Horizontal" Spacing="6">
+							<TextBlock Text="Recursive:" Opacity="0.6" />
+							<TextBlock Text="{Binding Dns.Recursive}" />
+						</StackPanel>
+					</StackPanel>
+				</TabItem>
+			</TabControl>
+
+			<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}"
+			            IsVisible="{Binding Data, Converter={StaticResource HasContentConverter}}">
+				<TextBlock Text="Raw banner" FontWeight="Bold" />
+				<TextBox Text="{Binding Data, Mode=OneWay}"
+				         IsReadOnly="True"
+				         AcceptsReturn="True"
+				         TextWrapping="Wrap"
+				         FontFamily="{StaticResource ShodanMonospaceFont}"
+				         FontSize="{StaticResource ShodanFontSizeSmall}" />
+			</StackPanel>
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

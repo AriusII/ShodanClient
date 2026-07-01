@@ -1,0 +1,127 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Trends"
+             xmlns:search="using:ShodanClient.App.ViewModels.Search"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ShodanClient.App.Views.Trends.TrendsView"
+             x:DataType="vm:TrendsViewModel">
+
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+	</UserControl.Resources>
+
+	<Grid RowDefinitions="Auto,*" Margin="{StaticResource ShodanThicknessMedium}"
+	      RowSpacing="{StaticResource ShodanSpacingSmall}">
+
+		<StackPanel Grid.Row="0" Spacing="{StaticResource ShodanSpacingSmall}">
+			<TextBox Text="{Binding Query, Mode=TwoWay}" PlaceholderText="Query to trend, e.g. apache country:US"
+			         IsEnabled="{Binding !IsBusy}" />
+
+			<ItemsControl ItemsSource="{Binding HighlightedFilters}">
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<WrapPanel Orientation="Horizontal" />
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
+				<ItemsControl.ItemTemplate>
+					<DataTemplate x:DataType="search:KnownFilterInfo">
+						<Button Content="{Binding Name}" ToolTip.Tip="{Binding Description}"
+						        Padding="6,2" Margin="0,0,4,4"
+						        Command="{Binding $parent[UserControl].((vm:TrendsViewModel)DataContext).InsertKnownFilterCommand}"
+						        CommandParameter="{Binding}" />
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+
+			<ItemsControl ItemsSource="{Binding Facets}">
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<WrapPanel Orientation="Horizontal" />
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
+				<ItemsControl.ItemTemplate>
+					<DataTemplate x:DataType="x:String">
+						<Border Background="#22FA3D3D" CornerRadius="10" Padding="8,2" Margin="0,0,6,6">
+							<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingXSmall}">
+								<TextBlock Text="{Binding}" VerticalAlignment="Center"
+								           FontSize="{StaticResource ShodanFontSizeSmall}" />
+								<Button Content="✕" Padding="4,0" Background="Transparent" BorderThickness="0"
+								        Command="{Binding $parent[UserControl].((vm:TrendsViewModel)DataContext).RemoveFacetCommand}"
+								        CommandParameter="{Binding}"
+								        ToolTip.Tip="Remove this facet" />
+							</StackPanel>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+
+			<Grid ColumnDefinitions="220,Auto" ColumnSpacing="{StaticResource ShodanSpacingSmall}">
+				<AutoCompleteBox Grid.Column="0" ItemsSource="{Binding FacetNameSuggestions}"
+				                 Text="{Binding NewFacetName, Mode=TwoWay}"
+				                 PlaceholderText="summarize by facet (e.g. country)" FilterMode="Contains"
+				                 IsEnabled="{Binding !IsBusy}" />
+				<Button Grid.Column="1" Content="Add facet" Command="{Binding AddFacetCommand}"
+				        IsEnabled="{Binding !IsBusy}"
+				        ToolTip.Tip="Facets are included in the same Trends search; they don't cost extra credits." />
+			</Grid>
+
+			<TextBlock Text="{Binding QueryValidationError}" Foreground="{StaticResource ShodanAccentBrush}"
+			           IsVisible="{Binding QueryValidationError, Converter={StaticResource HasContentConverter}}" />
+
+			<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+				<Button Content="Search trend (uses 1 query credit)" Command="{Binding SearchCommand}"
+				        Background="{StaticResource ShodanAccentBrush}" Foreground="White"
+				        IsEnabled="{Binding !IsBusy}"
+				        ToolTip.Tip="Unlike Search's count preview, Trends has no free endpoint — every Trends search spends 1 query credit." />
+				<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}" Width="18" Height="18" />
+				<TextBlock Text="{Binding Result.Total, StringFormat='Total matches: {0:N0}'}"
+				           VerticalAlignment="Center" Opacity="0.8"
+				           IsVisible="{Binding Result, Converter={StaticResource HasContentConverter}}" />
+			</StackPanel>
+		</StackPanel>
+
+		<ScrollViewer Grid.Row="1">
+			<StackPanel Spacing="{StaticResource ShodanSpacingMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}" HorizontalAlignment="Center"
+				            Margin="0,32,0,0"
+				            IsVisible="{Binding Result, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}">
+					<TextBlock Text="No trend data yet." Opacity="0.6" HorizontalAlignment="Center" />
+					<TextBlock Text="Run a search above to see matches per month."
+					           Opacity="0.4" FontSize="{StaticResource ShodanFontSizeSmall}"
+					           HorizontalAlignment="Center" />
+				</StackPanel>
+
+				<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}"
+				            IsVisible="{Binding OverallTrend, Converter={StaticResource HasContentConverter}}">
+					<TextBlock Text="Overall matches per month" FontWeight="Bold" />
+					<controls:TrendChart ItemsSource="{Binding OverallTrend}" Height="160" />
+				</StackPanel>
+
+				<ItemsControl ItemsSource="{Binding FacetSeries}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel Orientation="Horizontal" />
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="vm:TrendFacetValueSeries">
+							<Border Width="320" Margin="0,0,12,12" Padding="{StaticResource ShodanThicknessSmall}"
+							        Background="#14FFFFFF"
+							        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}">
+								<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}">
+									<TextBlock Text="{Binding Header}" FontWeight="Bold" />
+									<controls:TrendChart ItemsSource="{Binding Points}" Height="100" />
+								</StackPanel>
+							</Border>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</StackPanel>
+		</ScrollViewer>
+	</Grid>
+</UserControl>

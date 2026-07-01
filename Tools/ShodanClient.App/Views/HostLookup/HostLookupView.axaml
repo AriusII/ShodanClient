@@ -1,0 +1,308 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.HostLookup"
+             xmlns:domain="using:ShodanClient.Domain.Search"
+             xmlns:idb="using:ShodanClient.Domain.InternetDb"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="ShodanClient.App.Views.HostLookup.HostLookupView"
+             x:DataType="vm:HostLookupViewModel">
+
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+	</UserControl.Resources>
+
+	<Grid RowDefinitions="Auto,*" Margin="{StaticResource ShodanThicknessMedium}">
+
+		<StackPanel Grid.Row="0" Spacing="{StaticResource ShodanSpacingSmall}" Margin="0,0,0,12">
+			<TextBlock Text="Host Lookup" FontSize="{StaticResource ShodanFontSizeTitle}" FontWeight="Bold" />
+
+			<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="{StaticResource ShodanSpacingSmall}">
+				<TextBox Grid.Column="0"
+				         PlaceholderText="IP address, e.g. 8.8.8.8"
+				         Text="{Binding Ip}"
+				         IsEnabled="{Binding !IsBusy}" />
+
+				<ToggleSwitch Grid.Column="1"
+				              OnContent="InternetDB (free)"
+				              OffContent="Full lookup"
+				              IsChecked="{Binding UseInternetDb}"
+				              IsEnabled="{Binding !IsBusy}"
+				              VerticalAlignment="Center" />
+
+				<CheckBox Grid.Column="2"
+				          Content="Include history"
+				          IsChecked="{Binding IncludeHistory}"
+				          IsVisible="{Binding !UseInternetDb}"
+				          IsEnabled="{Binding !IsBusy}"
+				          VerticalAlignment="Center" />
+
+				<Button Grid.Column="3"
+				        Content="Lookup"
+				        Command="{Binding LookupCommand}"
+				        IsEnabled="{Binding !IsBusy}"
+				        Background="{StaticResource ShodanAccentBrush}"
+				        Foreground="White" />
+
+				<ui:FAProgressRing Grid.Column="4"
+				                   IsVisible="{Binding IsBusy}"
+				                   IsActive="{Binding IsBusy}"
+				                   Width="20"
+				                   Height="20"
+				                   VerticalAlignment="Center" />
+			</Grid>
+
+			<!-- The credit-cost distinction that actually matters here: InternetDB needs no account at
+                 all, while the full lookup calls Shodan's single-host endpoint, which (per Shodan's own
+                 REST API docs) does NOT spend query search credits either — it just requires a valid
+                 API key and returns richer, real-time detail than InternetDB's weekly-refreshed data. -->
+			<TextBlock Text="InternetDB lookup: free, no API key or credits needed."
+			           FontSize="{StaticResource ShodanFontSizeSmall}"
+			           Opacity="0.7"
+			           IsVisible="{Binding UseInternetDb}" />
+			<TextBlock
+				Text="Full lookup uses your Shodan API key's single-host endpoint — it does not spend query credits (unlike Search)."
+				FontSize="{StaticResource ShodanFontSizeSmall}"
+				Opacity="0.7"
+				IsVisible="{Binding !UseInternetDb}" />
+		</StackPanel>
+
+		<Grid Grid.Row="1">
+			<ScrollViewer>
+				<StackPanel Spacing="{StaticResource ShodanSpacingMedium}">
+
+					<!-- InternetDB mode: a simple field list, no per-service banners are available. -->
+					<StackPanel DataContext="{Binding DbResult}"
+					            Spacing="{StaticResource ShodanSpacingSmall}"
+					            x:DataType="idb:InternetDbHost"
+					            IsVisible="{Binding Converter={StaticResource HasContentConverter}}">
+						<TextBlock Text="{Binding Ip}" FontSize="{StaticResource ShodanFontSizeLarge}"
+						           FontWeight="Bold" />
+
+						<TextBlock Text="Ports" FontWeight="SemiBold"
+						           IsVisible="{Binding Ports, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Ports}"
+						              IsVisible="{Binding Ports, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:Int32">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="Hostnames" FontWeight="SemiBold"
+						           IsVisible="{Binding Hostnames, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Hostnames}"
+						              IsVisible="{Binding Hostnames, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="Tags" FontWeight="SemiBold"
+						           IsVisible="{Binding Tags, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Tags}"
+						              IsVisible="{Binding Tags, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="CPEs" FontWeight="SemiBold"
+						           IsVisible="{Binding Cpes, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Cpes}"
+						              IsVisible="{Binding Cpes, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="Vulnerabilities" FontWeight="SemiBold"
+						           IsVisible="{Binding Vulnerabilities, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Vulnerabilities}"
+						              IsVisible="{Binding Vulnerabilities, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:VulnerabilityBadge CveId="{Binding}"
+									                             OpenInExploitsCommand="{Binding $parent[UserControl].((vm:HostLookupViewModel)DataContext).OpenInExploitsCommand}"
+									                             Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+
+					<!-- Full Shodan mode: host summary + one BannerDetailView per collected service. -->
+					<StackPanel DataContext="{Binding Result}"
+					            Spacing="{StaticResource ShodanSpacingSmall}"
+					            x:DataType="domain:Host"
+					            IsVisible="{Binding Converter={StaticResource HasContentConverter}}">
+						<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingMedium}">
+							<TextBlock Text="{Binding IpString}" FontSize="{StaticResource ShodanFontSizeLarge}"
+							           FontWeight="Bold" />
+							<TextBlock Text="{Binding Organization}" Opacity="0.8" VerticalAlignment="Center" />
+							<TextBlock Text="{Binding Isp}" Opacity="0.8" VerticalAlignment="Center" />
+							<TextBlock Text="{Binding Asn}" Opacity="0.8" VerticalAlignment="Center" />
+							<TextBlock Text="{Binding OperatingSystem}" Opacity="0.8" VerticalAlignment="Center" />
+						</StackPanel>
+
+						<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}"
+						            IsVisible="{Binding Location.CountryName, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="{Binding Location.City}" />
+							<TextBlock Text="{Binding Location.CountryName}" />
+						</StackPanel>
+
+						<TextBlock Text="{Binding LastUpdate, StringFormat='Last updated {0:g}'}"
+						           Opacity="0.6"
+						           FontSize="{StaticResource ShodanFontSizeSmall}"
+						           IsVisible="{Binding LastUpdate, Converter={StaticResource HasContentConverter}}" />
+
+						<TextBlock Text="Ports" FontWeight="SemiBold"
+						           IsVisible="{Binding Ports, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Ports}"
+						              IsVisible="{Binding Ports, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:Int32">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="Hostnames" FontWeight="SemiBold"
+						           IsVisible="{Binding Hostnames, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Hostnames}"
+						              IsVisible="{Binding Hostnames, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="Domains" FontWeight="SemiBold"
+						           IsVisible="{Binding Domains, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Domains}"
+						              IsVisible="{Binding Domains, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="Tags" FontWeight="SemiBold"
+						           IsVisible="{Binding Tags, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Tags}"
+						              IsVisible="{Binding Tags, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="Vulnerabilities" FontWeight="SemiBold"
+						           IsVisible="{Binding Vulnerabilities, Converter={StaticResource HasContentConverter}}" />
+						<ItemsControl ItemsSource="{Binding Vulnerabilities}"
+						              IsVisible="{Binding Vulnerabilities, Converter={StaticResource HasContentConverter}}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:VulnerabilityBadge CveId="{Binding}"
+									                             OpenInExploitsCommand="{Binding $parent[UserControl].((vm:HostLookupViewModel)DataContext).OpenInExploitsCommand}"
+									                             Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBlock Text="{Binding Services.Count, StringFormat='{}{0} service(s)'}"
+						           FontWeight="SemiBold" />
+
+						<ItemsControl ItemsSource="{Binding Services}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<StackPanel Spacing="{StaticResource ShodanSpacingSmall}" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="domain:Banner">
+									<Border BorderBrush="#22808080" BorderThickness="1"
+									        CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}">
+										<controls:BannerDetailView
+											OpenInExploitsCommand="{Binding $parent[UserControl].((vm:HostLookupViewModel)DataContext).OpenInExploitsCommand}" />
+									</Border>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+
+				</StackPanel>
+			</ScrollViewer>
+
+			<TextBlock Text="No result yet — enter an IP above and press Lookup."
+			           HorizontalAlignment="Center"
+			           VerticalAlignment="Center"
+			           Opacity="0.6"
+			           IsHitTestVisible="False"
+			           IsVisible="{Binding !HasResult}" />
+		</Grid>
+	</Grid>
+</UserControl>

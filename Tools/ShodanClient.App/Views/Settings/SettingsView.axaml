@@ -1,0 +1,274 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Settings"
+             xmlns:session="using:ShodanClient.App.Session"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="700"
+             x:Class="ShodanClient.App.Views.Settings.SettingsView"
+             x:Name="Root"
+             x:DataType="vm:SettingsViewModel">
+
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+		<conv:ProfileActiveConverter x:Key="ProfileActiveConverter" />
+	</UserControl.Resources>
+
+	<ScrollViewer>
+		<StackPanel Margin="{StaticResource ShodanThicknessLarge}"
+		            Spacing="{StaticResource ShodanSpacingLarge}"
+		            MaxWidth="640"
+		            HorizontalAlignment="Stretch">
+
+			<TextBlock Text="Settings" FontSize="{StaticResource ShodanFontSizeTitle}" FontWeight="Bold" />
+
+			<!-- Profiles -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<TextBlock Text="Profiles" FontSize="{StaticResource ShodanFontSizeLarge}" FontWeight="SemiBold" />
+					<TextBlock TextWrapping="Wrap"
+					           Opacity="0.7"
+					           FontSize="{StaticResource ShodanFontSizeSmall}"
+					           Text="Save multiple Shodan API keys and switch between them instantly — no restart needed." />
+
+					<ItemsControl ItemsSource="{Binding Profiles.Profiles}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="session:ApiProfileDescriptor">
+								<Border CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+								        Padding="{StaticResource ShodanThicknessSmall}"
+								        Margin="0,0,0,6">
+									<Border.Background>
+										<MultiBinding Converter="{StaticResource ProfileActiveConverter}">
+											<Binding Path="Id" />
+											<Binding ElementName="Root"
+											         Path="((vm:SettingsViewModel)DataContext).Profiles.ActiveProfile.Id" />
+										</MultiBinding>
+									</Border.Background>
+
+									<Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+										<StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+											<!-- Display mode: hidden only for the single row currently being renamed. -->
+											<StackPanel Orientation="Horizontal" Spacing="6">
+												<StackPanel.IsVisible>
+													<MultiBinding Converter="{StaticResource ProfileActiveConverter}"
+													              ConverterParameter="NotCheck">
+														<Binding Path="Id" />
+														<Binding ElementName="Root"
+														         Path="((vm:SettingsViewModel)DataContext).RenamingProfileId" />
+													</MultiBinding>
+												</StackPanel.IsVisible>
+												<TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+												<TextBlock Foreground="{StaticResource ShodanAccentBrush}"
+												           FontWeight="Bold"
+												           VerticalAlignment="Center">
+													<TextBlock.IsVisible>
+														<MultiBinding
+															Converter="{StaticResource ProfileActiveConverter}"
+															ConverterParameter="Check">
+															<Binding Path="Id" />
+															<Binding ElementName="Root"
+															         Path="((vm:SettingsViewModel)DataContext).Profiles.ActiveProfile.Id" />
+														</MultiBinding>
+													</TextBlock.IsVisible>
+													✓ Active
+												</TextBlock>
+											</StackPanel>
+
+											<!-- Rename mode: shown only for the single row currently being renamed. -->
+											<StackPanel Orientation="Horizontal" Spacing="6">
+												<StackPanel.IsVisible>
+													<MultiBinding Converter="{StaticResource ProfileActiveConverter}"
+													              ConverterParameter="Check">
+														<Binding Path="Id" />
+														<Binding ElementName="Root"
+														         Path="((vm:SettingsViewModel)DataContext).RenamingProfileId" />
+													</MultiBinding>
+												</StackPanel.IsVisible>
+												<TextBox
+													Text="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).RenameInput}"
+													Width="160" />
+												<Button Content="Save"
+												        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).ConfirmRenameCommand}" />
+												<Button Content="Cancel"
+												        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).CancelRenameCommand}" />
+											</StackPanel>
+
+											<TextBlock FontFamily="{StaticResource ShodanMonospaceFont}"
+											           FontSize="{StaticResource ShodanFontSizeSmall}"
+											           Opacity="0.7">
+												<Run Text="{Binding MaskedKey}" />
+												<Run Text=" · added" />
+												<Run Text="{Binding CreatedAt, StringFormat='{}{0:d}'}" />
+											</TextBlock>
+										</StackPanel>
+
+										<Button Grid.Column="1" Content="Switch"
+										        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).SwitchProfileCommand}"
+										        CommandParameter="{Binding}" />
+										<Button Grid.Column="2" Content="Rename"
+										        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).BeginRenameCommand}"
+										        CommandParameter="{Binding}" />
+
+										<!-- Destructive action: outline styling + a confirmation flyout. -->
+										<Button Grid.Column="3"
+										        Content="Remove"
+										        Background="Transparent"
+										        BorderBrush="{StaticResource ShodanAccentBrush}"
+										        BorderThickness="1"
+										        Foreground="{StaticResource ShodanAccentBrush}">
+											<Button.Flyout>
+												<Flyout Placement="Top">
+													<StackPanel Spacing="{StaticResource ShodanSpacingSmall}"
+													            Width="220">
+														<TextBlock TextWrapping="Wrap">
+															<Run Text="Remove profile" />
+															<Run Text="{Binding Name}" FontWeight="Bold" />
+															<Run Text="? This can't be undone." />
+														</TextBlock>
+														<Button Content="Remove"
+														        HorizontalAlignment="Stretch"
+														        HorizontalContentAlignment="Center"
+														        Background="{StaticResource ShodanAccentBrush}"
+														        Foreground="White"
+														        Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).RemoveProfileCommand}"
+														        CommandParameter="{Binding}" />
+													</StackPanel>
+												</Flyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+
+					<TextBlock Text="No profiles saved yet."
+					           Opacity="0.6"
+					           IsVisible="{Binding Profiles.Profiles, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+
+					<!-- Add another profile -->
+					<Border BorderBrush="#22808080" BorderThickness="0,1,0,0" Padding="0,8,0,0">
+						<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+							<TextBlock Text="Add another profile" FontWeight="SemiBold"
+							           FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<Grid ColumnDefinitions="160,*" ColumnSpacing="8">
+								<TextBox Grid.Column="0"
+								         Text="{Binding NewProfileName}"
+								         PlaceholderText="Name (e.g. Work)"
+								         IsEnabled="{Binding !IsBusy}" />
+								<TextBox Grid.Column="1"
+								         Text="{Binding NewProfileApiKey}"
+								         PlaceholderText="Shodan API key"
+								         PasswordChar="•"
+								         IsEnabled="{Binding !IsBusy}" />
+							</Grid>
+
+							<TextBlock Text="{Binding AddProfileError}"
+							           Foreground="Red"
+							           TextWrapping="Wrap"
+							           IsVisible="{Binding AddProfileError, Converter={StaticResource HasContentConverter}}" />
+
+							<Grid ColumnDefinitions="Auto,Auto">
+								<Button Grid.Column="0"
+								        Content="Add profile"
+								        Command="{Binding AddProfileCommand}"
+								        IsEnabled="{Binding !IsBusy}"
+								        Background="{StaticResource ShodanAccentBrush}"
+								        Foreground="White" />
+								<ui:FAProgressRing Grid.Column="1"
+								                   IsVisible="{Binding IsBusy}"
+								                   IsActive="{Binding IsBusy}"
+								                   Width="18" Height="18"
+								                   Margin="8,0,0,0"
+								                   VerticalAlignment="Center" />
+							</Grid>
+						</StackPanel>
+					</Border>
+				</StackPanel>
+			</Border>
+
+			<!-- Appearance -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<TextBlock Text="Appearance" FontSize="{StaticResource ShodanFontSizeLarge}" FontWeight="SemiBold" />
+
+					<Grid ColumnDefinitions="Auto,*">
+						<TextBlock Grid.Column="0"
+						           Text="Theme"
+						           VerticalAlignment="Center"
+						           Margin="0,0,12,0" />
+						<ComboBox Grid.Column="1"
+						          ItemsSource="{Binding ThemeOptions}"
+						          SelectedItem="{Binding SelectedTheme}"
+						          HorizontalAlignment="Left"
+						          MinWidth="160" />
+					</Grid>
+				</StackPanel>
+			</Border>
+
+			<!-- Advanced -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<TextBlock Text="Advanced" FontSize="{StaticResource ShodanFontSizeLarge}" FontWeight="SemiBold" />
+					<TextBlock TextWrapping="Wrap"
+					           Opacity="0.7"
+					           FontSize="{StaticResource ShodanFontSizeSmall}"
+					           Text="Overrides for the SDK's resilience and client-side rate limiting. Leave blank to use the defaults. Applies the next time you connect." />
+
+					<Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+						<TextBlock Grid.Row="0" Grid.Column="0"
+						           Text="Max retries"
+						           VerticalAlignment="Center"
+						           Margin="0,0,12,8" />
+						<TextBox Grid.Row="0" Grid.Column="1"
+						         Text="{Binding MaxRetriesInput}"
+						         PlaceholderText="3 (default)"
+						         Margin="0,0,0,8"
+						         HorizontalAlignment="Left"
+						         MinWidth="120" />
+
+						<TextBlock Grid.Row="1" Grid.Column="0"
+						           Text="Permits / second"
+						           VerticalAlignment="Center"
+						           Margin="0,0,12,0" />
+						<TextBox Grid.Row="1" Grid.Column="1"
+						         Text="{Binding PermitsPerSecondInput}"
+						         PlaceholderText="1 (default)"
+						         HorizontalAlignment="Left"
+						         MinWidth="120" />
+					</Grid>
+
+					<TextBlock Text="{Binding AdvancedErrorMessage}"
+					           Foreground="Red"
+					           TextWrapping="Wrap"
+					           IsVisible="{Binding AdvancedErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+					<TextBlock Text="{Binding AdvancedStatusMessage}"
+					           TextWrapping="Wrap"
+					           IsVisible="{Binding AdvancedStatusMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+					<Grid ColumnDefinitions="Auto,Auto">
+						<Button Grid.Column="0"
+						        Content="Save advanced settings"
+						        Command="{Binding SaveAdvancedCommand}"
+						        IsEnabled="{Binding !IsBusy}" />
+						<ui:FAProgressRing Grid.Column="1"
+						                   IsVisible="{Binding IsBusy}"
+						                   IsActive="{Binding IsBusy}"
+						                   Width="18" Height="18"
+						                   Margin="8,0,0,0"
+						                   VerticalAlignment="Center" />
+					</Grid>
+				</StackPanel>
+			</Border>
+
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

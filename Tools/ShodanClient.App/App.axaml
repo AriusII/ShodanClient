@@ -1,0 +1,20 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:styling="using:FluentAvalonia.Styling"
+             x:Class="ShodanClient.App.App"
+             RequestedThemeVariant="Dark">
+	<!-- Dark by default (see plan); Settings lets the user switch to Light/System. -->
+
+	<Application.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceInclude Source="avares://ShodanClient.App/Styles/Theme.axaml" />
+				<ResourceInclude Source="avares://ShodanClient.App/Styles/Typography.axaml" />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</Application.Resources>
+
+	<Application.Styles>
+		<styling:FluentAvaloniaTheme />
+	</Application.Styles>
+</Application>

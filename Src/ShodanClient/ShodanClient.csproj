@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<Description>A modern, high-performance .NET client for the Shodan API (Search, Scanning, Alerts, Notifiers, Directory, DNS, Account, Organization, Bulk Data, Utility, Streaming, Exploits, InternetDB).</Description>
+		<RootNamespace>ShodanClient</RootNamespace>
+		<PackageId>ShodanClient</PackageId>
+		<IsPackable>true</IsPackable>
+		<EnablePackageValidation>true</EnablePackageValidation>
+		<JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+		<!-- Source-generate the configuration binder so options binding is reflection-free (AOT/trim safe). -->
+		<EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- ShodanClient.Domain/Application/Infrastructure are internal layers (IsPackable=false),
+				 never published as separate packages. Their compiled output is bundled directly into
+				 this package's lib folder by the target below, while THEIR OWN NuGet package
+				 dependencies (Microsoft.Extensions.Http, etc.) still flow through normally as proper
+				 dependencies of the published ShodanClient package - no PrivateAssets here on purpose. -->
+		<ProjectReference Include="..\ShodanClient.Domain\ShodanClient.Domain.csproj"/>
+		<ProjectReference Include="..\ShodanClient.Application\ShodanClient.Application.csproj"/>
+		<ProjectReference Include="..\ShodanClient.Infrastructure\ShodanClient.Infrastructure.csproj"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="ShodanClient.Tests"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions"/>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+		<PackageReference Include="Microsoft.Extensions.Http"/>
+		<PackageReference Include="Microsoft.Extensions.Options"/>
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions"/>
+		<PackageReference Include="Microsoft.SourceLink.GitHub">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<!-- Merge the internal-only Domain/Application/Infrastructure assemblies into this package's
+			 lib folder (see https://learn.microsoft.com/nuget/reference/msbuild-targets#pack-target). -->
+	<PropertyGroup>
+		<TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);_AddInternalLayerAssembliesToPackage</TargetsForTfmSpecificBuildOutput>
+	</PropertyGroup>
+
+	<Target Name="_AddInternalLayerAssembliesToPackage" DependsOnTargets="BuildOnlySettings;ResolveReferences">
+		<ItemGroup>
+			<!-- Only DLLs that came from compiling our own ProjectReferences, not ones that arrived
+					 transitively from a NuGet package (those keep flowing as real package dependencies). -->
+			<_InternalLayerAssembly Include="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.NuGetPackageId)' == '' and ('%(ReferenceCopyLocalPaths.Extension)' == '.dll' or '%(ReferenceCopyLocalPaths.Extension)' == '.pdb')"/>
+			<BuildOutputInPackage Include="@(_InternalLayerAssembly)"/>
+		</ItemGroup>
+	</Target>
+
+</Project>

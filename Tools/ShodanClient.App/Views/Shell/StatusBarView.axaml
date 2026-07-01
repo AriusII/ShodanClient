@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Shell"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="24"
+             x:Class="ShodanClient.App.Views.Shell.StatusBarView"
+             x:DataType="vm:ShellViewModel">
+	<Border Padding="8,4" Background="{DynamicResource ShodanCardBackgroundBrush}">
+		<Grid ColumnDefinitions="Auto,*,Auto">
+			<TextBlock Grid.Column="0" Text="ShodanClient.App" FontSize="11" Opacity="0.6" />
+			<TextBlock Grid.Column="1"
+			           Margin="12,0"
+			           FontSize="11"
+			           Opacity="0.8"
+			           TextTrimming="CharacterEllipsis"
+			           Text="{Binding LatestNotificationMessage}" />
+			<TextBlock Grid.Column="2" Name="ClockText" FontSize="11" Opacity="0.6" />
+		</Grid>
+	</Border>
+</UserControl>

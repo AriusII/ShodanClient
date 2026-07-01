@@ -1,0 +1,226 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Dashboard"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="700"
+             x:Class="ShodanClient.App.Views.Dashboard.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+		<conv:BoolToTextConverter x:Key="BoolToTextConverter" />
+	</UserControl.Resources>
+
+	<ScrollViewer>
+		<StackPanel Margin="{StaticResource ShodanThicknessLarge}"
+		            Spacing="{StaticResource ShodanSpacingLarge}"
+		            MaxWidth="760"
+		            HorizontalAlignment="Stretch">
+
+			<TextBlock Text="Dashboard" FontSize="{StaticResource ShodanFontSizeTitle}" FontWeight="Bold" />
+
+			<!-- Account summary card -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<Panel>
+					<StackPanel Spacing="{StaticResource ShodanSpacingSmall}"
+					            IsVisible="{Binding AccountSession.Current, Converter={StaticResource HasContentConverter}}">
+						<Grid ColumnDefinitions="*,Auto,Auto">
+							<StackPanel Grid.Column="0" Spacing="2">
+								<TextBlock
+									Text="{Binding AccountSession.Current.DisplayName, TargetNullValue='Your account'}"
+									FontSize="{StaticResource ShodanFontSizeLarge}"
+									FontWeight="SemiBold" />
+								<TextBlock Text="{Binding AccountSession.Current.Plan, StringFormat='Plan: {0}'}"
+								           FontSize="{StaticResource ShodanFontSizeSmall}"
+								           Opacity="0.7" />
+								<TextBlock FontSize="{StaticResource ShodanFontSizeSmall}"
+								           Opacity="0.7">
+									<Run Text="Membership: " />
+									<Run
+										Text="{Binding AccountSession.Current.Member, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Paying member|Free account'}" />
+								</TextBlock>
+							</StackPanel>
+
+							<ui:FAProgressRing Grid.Column="1"
+							                   IsVisible="{Binding AccountSession.IsRefreshing}"
+							                   IsActive="{Binding AccountSession.IsRefreshing}"
+							                   Width="18" Height="18"
+							                   Margin="0,0,8,0"
+							                   VerticalAlignment="Center" />
+
+							<Button Grid.Column="2"
+							        Content="Refresh"
+							        Command="{Binding RefreshAccountCommand}"
+							        IsEnabled="{Binding !IsBusy}" />
+						</Grid>
+
+						<Grid ColumnDefinitions="*,*,*" Margin="0,8,0,0">
+							<StackPanel Grid.Column="0" Spacing="2">
+								<TextBlock Text="Query credits" Opacity="0.6"
+								           FontSize="{StaticResource ShodanFontSizeSmall}" />
+								<TextBlock Text="{Binding AccountSession.Current.QueryCredits}"
+								           FontSize="{StaticResource ShodanFontSizeLarge}"
+								           FontWeight="Bold" />
+							</StackPanel>
+							<StackPanel Grid.Column="1" Spacing="2">
+								<TextBlock Text="Scan credits" Opacity="0.6"
+								           FontSize="{StaticResource ShodanFontSizeSmall}" />
+								<TextBlock Text="{Binding AccountSession.Current.ScanCredits}"
+								           FontSize="{StaticResource ShodanFontSizeLarge}"
+								           FontWeight="Bold" />
+							</StackPanel>
+							<StackPanel Grid.Column="2" Spacing="2">
+								<TextBlock Text="HTTPS-only access" Opacity="0.6"
+								           FontSize="{StaticResource ShodanFontSizeSmall}" />
+								<TextBlock
+									Text="{Binding AccountSession.Current.Https, Converter={StaticResource BoolToTextConverter}, ConverterParameter='Yes|No'}"
+									FontSize="{StaticResource ShodanFontSizeNormal}" />
+							</StackPanel>
+						</Grid>
+					</StackPanel>
+
+					<TextBlock Text="Loading account status…"
+					           Opacity="0.6"
+					           IsVisible="{Binding AccountSession.Current, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+				</Panel>
+			</Border>
+
+			<!-- Quick InternetDB lookup -->
+			<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<Grid ColumnDefinitions="*,Auto">
+						<TextBlock Grid.Column="0" Text="Quick InternetDB Lookup"
+						           FontSize="{StaticResource ShodanFontSizeLarge}"
+						           FontWeight="SemiBold" />
+						<Border Grid.Column="1"
+						        Background="{StaticResource ShodanAccentBrush}"
+						        CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+						        Padding="8,2">
+							<TextBlock Text="FREE" Foreground="White" FontSize="{StaticResource ShodanFontSizeSmall}"
+							           FontWeight="Bold" />
+						</Border>
+					</Grid>
+					<TextBlock TextWrapping="Wrap"
+					           Opacity="0.7"
+					           FontSize="{StaticResource ShodanFontSizeSmall}"
+					           Text="Free, key-less summary of open ports, hostnames, tags and known vulnerabilities for an IP. Never uses a query credit." />
+
+					<Grid ColumnDefinitions="*,Auto,Auto">
+						<TextBox Grid.Column="0"
+						         PlaceholderText="IP address"
+						         Text="{Binding IpInput}"
+						         IsEnabled="{Binding !IsBusy}" />
+						<ui:FAProgressRing Grid.Column="1"
+						                   IsVisible="{Binding IsBusy}"
+						                   IsActive="{Binding IsBusy}"
+						                   Width="18" Height="18"
+						                   Margin="8,0"
+						                   VerticalAlignment="Center" />
+						<Button Grid.Column="2"
+						        Margin="8,0,0,0"
+						        Content="Look up"
+						        Command="{Binding LookupInternetDbCommand}"
+						        IsEnabled="{Binding !IsBusy}" />
+					</Grid>
+
+					<TextBlock Text="{Binding LookupError}"
+					           Foreground="Red"
+					           TextWrapping="Wrap"
+					           IsVisible="{Binding LookupError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+					<StackPanel Spacing="{StaticResource ShodanSpacingSmall}"
+					            IsVisible="{Binding LookupResult, Converter={StaticResource HasContentConverter}}">
+						<TextBlock Text="{Binding LookupResult.Ip, StringFormat='Results for {0}'}"
+						           FontWeight="SemiBold" />
+
+						<TextBlock Text="{Binding PortsDisplay, StringFormat='Ports: {0}'}" TextWrapping="Wrap" />
+
+						<StackPanel
+							IsVisible="{Binding LookupResult.Hostnames, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Hostnames" Opacity="0.6" FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<ItemsControl ItemsSource="{Binding LookupResult.Hostnames}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<WrapPanel />
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="x:String">
+										<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+
+						<StackPanel
+							IsVisible="{Binding LookupResult.Tags, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Tags" Opacity="0.6" FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<ItemsControl ItemsSource="{Binding LookupResult.Tags}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<WrapPanel />
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="x:String">
+										<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+
+						<StackPanel
+							IsVisible="{Binding LookupResult.Cpes, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="CPEs" Opacity="0.6" FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<ItemsControl ItemsSource="{Binding LookupResult.Cpes}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<WrapPanel />
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="x:String">
+										<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+
+						<StackPanel
+							IsVisible="{Binding LookupResult.Vulnerabilities, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="Vulnerabilities" Opacity="0.6"
+							           FontSize="{StaticResource ShodanFontSizeSmall}" />
+							<ItemsControl ItemsSource="{Binding LookupResult.Vulnerabilities}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<WrapPanel />
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="x:String">
+										<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</StackPanel>
+				</StackPanel>
+			</Border>
+
+			<!-- Shortcuts -->
+			<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+				<Button Content="Go to Search" Command="{Binding GoToSearchCommand}" />
+				<Button Content="Go to Host Lookup" Command="{Binding GoToHostLookupCommand}" />
+			</StackPanel>
+
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

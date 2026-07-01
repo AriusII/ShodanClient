@@ -1,0 +1,63 @@
+<Project>
+
+	<PropertyGroup Label="Language and framework">
+		<TargetFramework>net10.0</TargetFramework>
+		<LangVersion>14.0</LangVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Features>strict</Features>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Build quality">
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<WarningLevel>9999</WarningLevel>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<!-- 'latest-recommended' = Microsoft's curated professional rule set enforced as build
+				 errors (nullability, async, disposal, security, correctness). We deliberately avoid
+				 'latest-all', which also turns on stylistic/pedantic rules that fight an idiomatic
+				 DI-first HTTP client and produce false positives under TreatWarningsAsErrors. -->
+		<AnalysisLevel>latest-recommended</AnalysisLevel>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- CS1591: missing XML doc comment - not every member needs prose docs.
+				 CS1573: partially-documented parameter list - overload params are described on the base member.
+				 CA1303: literal strings passed instead of localized resources - this library is not localized. -->
+		<NoWarn>$(NoWarn);CS1591;CS1573;CA1303</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Determinism and SourceLink">
+		<Deterministic>true</Deterministic>
+		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
+
+	<PropertyGroup Label="AOT and trimming readiness">
+		<IsAotCompatible Condition="'$(IsTestProject)' != 'true'">true</IsAotCompatible>
+		<EnableTrimAnalyzer Condition="'$(IsTestProject)' != 'true'">true</EnableTrimAnalyzer>
+		<!-- NOTE: VerifyReferenceAotCompatibility/VerifyReferenceTrimCompatibility (new in .NET 10) were
+				 evaluated but are NOT enabled: Polly.Core, Polly.Extensions, Polly.RateLimiting and
+				 Microsoft.Extensions.ObjectPool (transitive deps of Microsoft.Extensions.Http.Resilience)
+				 aren't yet annotated IsAotCompatible=true upstream even though a real `dotnet publish -r
+				 win-x64 -p:PublishAot=true` of this solution completes with zero IL2xxx/IL3xxx warnings.
+				 Enabling the verification would fail the build on a false positive (missing metadata, not an
+				 actual incompatibility). Revisit once those packages ship the annotation. -->
+	</PropertyGroup>
+
+	<PropertyGroup Label="Package metadata defaults">
+		<IsPackable>false</IsPackable>
+		<Authors>AriusII</Authors>
+		<Company>AriusII</Company>
+		<Copyright>Copyright (c) $([System.DateTime]::Now.Year) AriusII</Copyright>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/AriusII/ShodanClient</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/AriusII/ShodanClient</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>shodan;security;osint;api-client;networking</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<NeutralLanguage>en</NeutralLanguage>
+	</PropertyGroup>
+
+</Project>

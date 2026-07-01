@@ -1,0 +1,134 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.QueryDirectory"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:directory="using:ShodanClient.Domain.Directory"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="ShodanClient.App.Views.QueryDirectory.QueryDirectoryView"
+             x:DataType="vm:QueryDirectoryViewModel"
+             x:Name="Root">
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+	</UserControl.Resources>
+
+	<ScrollViewer>
+		<StackPanel Spacing="{StaticResource ShodanSpacingMedium}" Margin="{StaticResource ShodanThicknessLarge}">
+
+			<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+				<TextBlock Text="Directory" FontSize="{StaticResource ShodanFontSizeTitle}" FontWeight="Bold" />
+				<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}" IsIndeterminate="True"
+				                   Width="18" Height="18" VerticalAlignment="Center" />
+			</StackPanel>
+			<TextBlock Text="Browsing and searching saved queries is free — no query credits used."
+			           Opacity="0.6" FontSize="{StaticResource ShodanFontSizeSmall}" />
+
+			<TabControl SelectedIndex="{Binding SelectedTabIndex}">
+				<TabItem Header="Browse">
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}" Margin="0,12">
+						<ComboBox ItemsSource="{Binding SortFields}"
+						          SelectedItem="{Binding SortField}"
+						          PlaceholderText="Sort by"
+						          Width="140"
+						          IsEnabled="{Binding !IsBusy}" />
+						<ComboBox ItemsSource="{Binding SortOrders}"
+						          SelectedItem="{Binding SortOrder}"
+						          PlaceholderText="Order"
+						          Width="120"
+						          IsEnabled="{Binding !IsBusy}" />
+						<Button Content="Browse (free)" Command="{Binding BrowseCommand}" IsEnabled="{Binding !IsBusy}" />
+					</StackPanel>
+				</TabItem>
+				<TabItem Header="Search">
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}" Margin="0,12">
+						<TextBox Text="{Binding SearchTerm}" PlaceholderText="Search saved queries…" Width="320"
+						         IsEnabled="{Binding !IsBusy}" />
+						<Button Content="Search (free)" Command="{Binding SearchCommand}" IsEnabled="{Binding !IsBusy}" />
+					</StackPanel>
+				</TabItem>
+			</TabControl>
+
+			<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}">
+				<TextBlock Text="Popular tags" FontWeight="SemiBold" />
+				<ItemsControl ItemsSource="{Binding PopularTags}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel Orientation="Horizontal" />
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="directory:QueryTag">
+							<Button Content="{Binding Value}"
+							        CommandParameter="{Binding}"
+							        Command="{Binding ((vm:QueryDirectoryViewModel)DataContext).SelectTagCommand, ElementName=Root}"
+							        IsEnabled="{Binding ((vm:QueryDirectoryViewModel)DataContext).IsBusy, ElementName=Root, Converter={x:Static BoolConverters.Not}}"
+							        CornerRadius="10"
+							        Padding="10,4"
+							        Margin="0,0,6,6" />
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</StackPanel>
+
+			<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingMedium}">
+				<TextBlock Text="{Binding TotalResults, StringFormat='{}{0:N0} total results'}" Opacity="0.7"
+				           VerticalAlignment="Center" />
+				<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}"
+				            IsEnabled="{Binding !IsBusy}">
+					<Button Content="◀ Prev" Command="{Binding PreviousPageCommand}"
+					        IsEnabled="{Binding CanGoToPreviousPage}" />
+					<TextBlock Text="{Binding Page, StringFormat='Page {0}'}" VerticalAlignment="Center" />
+					<Button Content="Next ▶" Command="{Binding NextPageCommand}"
+					        IsEnabled="{Binding HasMoreResults}" />
+				</StackPanel>
+			</StackPanel>
+
+			<ItemsControl ItemsSource="{Binding Results}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate x:DataType="directory:SavedQuery">
+						<Border BorderBrush="#22FFFFFF" BorderThickness="0,0,0,1" Padding="0,10">
+							<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}">
+								<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+									<TextBlock Text="{Binding Title}"
+									           FontWeight="Bold"
+									           IsVisible="{Binding Title, Converter={StaticResource HasContentConverter}}" />
+									<TextBlock Text="{Binding Votes, StringFormat='{}{0} votes'}" Opacity="0.7" />
+								</StackPanel>
+								<TextBlock Text="{Binding Query}" FontFamily="{StaticResource ShodanMonospaceFont}"
+								           TextWrapping="Wrap" />
+								<TextBlock Text="{Binding Description}"
+								           TextWrapping="Wrap"
+								           Opacity="0.8"
+								           IsVisible="{Binding Description, Converter={StaticResource HasContentConverter}}" />
+								<ItemsControl ItemsSource="{Binding Tags}">
+									<ItemsControl.ItemsPanel>
+										<ItemsPanelTemplate>
+											<WrapPanel Orientation="Horizontal" />
+										</ItemsPanelTemplate>
+									</ItemsControl.ItemsPanel>
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="x:String">
+											<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+								<Button Content="Use this query"
+								        HorizontalAlignment="Left"
+								        CommandParameter="{Binding}"
+								        Command="{Binding ((vm:QueryDirectoryViewModel)DataContext).UseQueryCommand, ElementName=Root}" />
+							</StackPanel>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+
+			<TextBlock Text="No saved queries found."
+			           Opacity="0.6"
+			           IsVisible="{Binding Results, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

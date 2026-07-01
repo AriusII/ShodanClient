@@ -1,0 +1,182 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Scans"
+             xmlns:scanning="using:ShodanClient.Domain.Scanning"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="ShodanClient.App.Views.Scans.ScansView"
+             x:DataType="vm:ScansViewModel">
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+	</UserControl.Resources>
+
+	<ScrollViewer>
+		<StackPanel Spacing="{StaticResource ShodanSpacingLarge}" Margin="{StaticResource ShodanThicknessLarge}">
+
+			<TextBlock Text="Scans" FontSize="{StaticResource ShodanFontSizeTitle}" FontWeight="Bold" />
+
+			<!-- Reference panel: crawled ports and protocols. -->
+			<Border Background="#14FFFFFF"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<TextBlock Text="Crawled ports" FontWeight="SemiBold"
+					           FontSize="{StaticResource ShodanFontSizeLarge}" />
+					<ItemsControl ItemsSource="{Binding CrawledPorts}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<WrapPanel Orientation="Horizontal" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="x:Int32">
+								<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+
+					<TextBlock Text="Protocols" FontWeight="SemiBold" FontSize="{StaticResource ShodanFontSizeLarge}"
+					           Margin="0,8,0,0" />
+					<ItemsControl ItemsSource="{Binding Protocols}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="vm:ProtocolInfo">
+								<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}"
+								            Margin="0,2">
+									<TextBlock Text="{Binding Name}" FontWeight="SemiBold" Width="100" />
+									<TextBlock Text="{Binding Description}" TextWrapping="Wrap" Opacity="0.8" />
+								</StackPanel>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+			</Border>
+
+			<!-- Request scan. -->
+			<Border Background="#14FFFFFF"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<TextBlock Text="Request scan" FontWeight="SemiBold"
+					           FontSize="{StaticResource ShodanFontSizeLarge}" />
+					<TextBlock
+						Text="IP addresses or CIDR blocks, comma or newline separated. Each IP consumes 1 scan credit — a netblock (e.g. a /24) expands to many IPs and credits."
+						TextWrapping="Wrap" Opacity="0.7" FontSize="{StaticResource ShodanFontSizeSmall}" />
+					<TextBox Text="{Binding ScanTargetsInput}"
+					         PlaceholderText="e.g. 8.8.8.8, 1.1.1.0/24"
+					         AcceptsReturn="True"
+					         TextWrapping="Wrap"
+					         Height="90"
+					         IsEnabled="{Binding !IsBusy}" />
+					<TextBlock Text="Click &quot;Request Scan&quot; again to confirm — this will consume scan credits."
+					           Foreground="Orange"
+					           TextWrapping="Wrap"
+					           IsVisible="{Binding IsScanConfirmationPending}" />
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+						<Button Content="Request Scan"
+						        Command="{Binding RequestScanCommand}"
+						        Background="{StaticResource ShodanAccentBrush}"
+						        Foreground="White"
+						        IsEnabled="{Binding !IsBusy}"
+						        ToolTip.Tip="Uses scan credits: 1 per IP address scanned." />
+						<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}"
+						                   IsIndeterminate="True"
+						                   Width="18" Height="18" VerticalAlignment="Center" />
+					</StackPanel>
+				</StackPanel>
+			</Border>
+
+			<!-- Scan the Internet (Enterprise). -->
+			<Border Background="#14FFFFFF"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}"
+			        IsVisible="{Binding IsEnterprise}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<TextBlock Text="Scan the Internet (Enterprise)" FontWeight="SemiBold"
+					           FontSize="{StaticResource ShodanFontSizeLarge}" />
+					<TextBlock
+						Text="Requests an Internet-wide crawl for a specific port and protocol. Consumes 1 scan credit for every matching IP found — this can be a very large number of credits."
+						TextWrapping="Wrap" Opacity="0.7" FontSize="{StaticResource ShodanFontSizeSmall}" />
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+						<TextBox Text="{Binding InternetScanPortInput}" PlaceholderText="Port" Width="100"
+						         IsEnabled="{Binding !IsBusy}" />
+						<ComboBox ItemsSource="{Binding Protocols}"
+						          SelectedItem="{Binding SelectedInternetScanProtocol}"
+						          PlaceholderText="Protocol"
+						          Width="220"
+						          IsEnabled="{Binding !IsBusy}">
+							<ComboBox.ItemTemplate>
+								<DataTemplate x:DataType="vm:ProtocolInfo">
+									<TextBlock Text="{Binding Name}" />
+								</DataTemplate>
+							</ComboBox.ItemTemplate>
+						</ComboBox>
+						<Button Content="Scan Internet"
+						        Command="{Binding ScanInternetCommand}"
+						        IsEnabled="{Binding !IsBusy}"
+						        ToolTip.Tip="Uses scan credits: 1 per matching IP found." />
+						<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}"
+						                   IsIndeterminate="True"
+						                   Width="18" Height="18" VerticalAlignment="Center" />
+					</StackPanel>
+					<TextBlock
+						Text="Click &quot;Scan Internet&quot; again to confirm — this will consume scan credits."
+						Foreground="Orange"
+						TextWrapping="Wrap"
+						IsVisible="{Binding IsInternetScanConfirmationPending}" />
+				</StackPanel>
+			</Border>
+
+			<!-- Active scans. -->
+			<Border Background="#14FFFFFF"
+			        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+			        Padding="{StaticResource ShodanThicknessMedium}">
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+						<TextBlock Text="Active scans" FontWeight="SemiBold"
+						           FontSize="{StaticResource ShodanFontSizeLarge}"
+						           VerticalAlignment="Center" />
+						<Button Content="Refresh (free)" Command="{Binding RefreshActiveScansCommand}"
+						        IsEnabled="{Binding !IsBusy}" />
+						<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}"
+						                   IsIndeterminate="True"
+						                   Width="18" Height="18" VerticalAlignment="Center" />
+					</StackPanel>
+
+					<Grid ColumnDefinitions="2*,1*,1*,1.5*,1*" Margin="0,4">
+						<TextBlock Grid.Column="0" Text="Scan ID" FontWeight="SemiBold" Opacity="0.7" />
+						<TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" Opacity="0.7" />
+						<TextBlock Grid.Column="2" Text="Size" FontWeight="SemiBold" Opacity="0.7" />
+						<TextBlock Grid.Column="3" Text="Created" FontWeight="SemiBold" Opacity="0.7" />
+						<TextBlock Grid.Column="4" Text="Credits left" FontWeight="SemiBold" Opacity="0.7" />
+					</Grid>
+
+					<ItemsControl ItemsSource="{Binding ActiveScans}"
+					              IsVisible="{Binding ActiveScans, Converter={StaticResource HasContentConverter}}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="scanning:ScanListEntry">
+								<Border BorderBrush="#22FFFFFF" BorderThickness="0,0,0,1" Padding="0,6">
+									<Grid ColumnDefinitions="2*,1*,1*,1.5*,1*">
+										<TextBlock Grid.Column="0" Text="{Binding Id}" />
+										<TextBlock Grid.Column="1" Text="{Binding Status}" FontWeight="SemiBold" />
+										<TextBlock Grid.Column="2" Text="{Binding Size}" />
+										<TextBlock Grid.Column="3" Text="{Binding Created, StringFormat='{}{0:g}'}" />
+										<TextBlock Grid.Column="4" Text="{Binding CreditsLeft}" />
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+
+					<TextBlock Text="No active scans."
+					           Opacity="0.6"
+					           IsVisible="{Binding ActiveScans, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+				</StackPanel>
+			</Border>
+
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

@@ -1,0 +1,86 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Organization"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="ShodanClient.App.Views.Organization.OrganizationView"
+             x:DataType="vm:OrganizationViewModel">
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+	</UserControl.Resources>
+
+	<Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="16">
+
+		<StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
+			<TextBlock Text="{Binding Title}" FontSize="{StaticResource ShodanFontSizeTitle}" FontWeight="Bold"
+			           VerticalAlignment="Center" />
+			<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}" IsIndeterminate="True"
+			                   Width="18" Height="18" VerticalAlignment="Center" />
+			<Button Content="Refresh" Command="{Binding LoadCommand}" IsEnabled="{Binding !IsBusy}"
+			        VerticalAlignment="Center" />
+		</StackPanel>
+
+		<ui:FAInfoBar Grid.Row="1"
+		              IsOpen="{Binding RequiresEnterprise}"
+		              IsClosable="False"
+		              Severity="Warning"
+		              Title="Requires an Enterprise plan"
+		              Message="Organization management is only available to accounts on a Shodan Enterprise plan."
+		              Margin="0,0,0,12" />
+
+		<StackPanel Grid.Row="2"
+		            Spacing="4"
+		            Margin="0,0,0,12"
+		            IsVisible="{Binding Org, Converter={StaticResource HasContentConverter}}">
+			<TextBlock Text="{Binding Org.Name}" FontSize="{StaticResource ShodanFontSizeLarge}" FontWeight="Bold" />
+			<StackPanel Orientation="Horizontal" Spacing="16">
+				<TextBlock Text="{Binding Org.UpgradeType, StringFormat='Upgrade type: {0}'}"
+				           Opacity="0.8"
+				           IsVisible="{Binding Org.UpgradeType, Converter={StaticResource HasContentConverter}}" />
+				<TextBlock Text="{Binding Org.Domains.Count, StringFormat='{}{0} claimed domain(s)'}" Opacity="0.8" />
+			</StackPanel>
+		</StackPanel>
+
+		<DataGrid Grid.Row="3"
+		          ItemsSource="{Binding MemberRows}"
+		          AutoGenerateColumns="False"
+		          IsReadOnly="True"
+		          GridLinesVisibility="Horizontal"
+		          IsVisible="{Binding Org, Converter={StaticResource HasContentConverter}}">
+			<DataGrid.Columns>
+				<DataGridTextColumn x:DataType="vm:OrgMemberRow" Header="Username" Binding="{Binding Username}"
+				                    Width="*" />
+				<DataGridTextColumn x:DataType="vm:OrgMemberRow" Header="Email" Binding="{Binding Email}" Width="*" />
+				<DataGridCheckBoxColumn x:DataType="vm:OrgMemberRow" Header="Admin" Binding="{Binding IsAdmin}"
+				                        Width="80" />
+				<DataGridTemplateColumn Header="" Width="100">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate x:DataType="vm:OrgMemberRow">
+							<Button Content="Remove"
+							        Command="{Binding $parent[DataGrid].((vm:OrganizationViewModel)DataContext).RemoveMemberCommand}"
+							        CommandParameter="{Binding}"
+							        IsEnabled="{Binding $parent[DataGrid].((vm:OrganizationViewModel)DataContext).IsBusy, Converter={x:Static BoolConverters.Not}}" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+			</DataGrid.Columns>
+		</DataGrid>
+
+		<StackPanel Grid.Row="4"
+		            Orientation="Horizontal"
+		            Spacing="8"
+		            Margin="0,12,0,0"
+		            IsVisible="{Binding Org, Converter={StaticResource HasContentConverter}}">
+			<TextBox Text="{Binding NewMemberUser}" PlaceholderText="Username or email" Width="220"
+			         IsEnabled="{Binding !IsBusy}" />
+			<CheckBox Content="Notify by email" IsChecked="{Binding NotifyNewMember}" VerticalAlignment="Center"
+			          IsEnabled="{Binding !IsBusy}" />
+			<Button Content="Add member"
+			        Command="{Binding AddMemberCommand}"
+			        IsEnabled="{Binding !IsBusy}" />
+		</StackPanel>
+	</Grid>
+</UserControl>

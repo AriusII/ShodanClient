@@ -1,0 +1,175 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Shell"
+             xmlns:session="using:ShodanClient.App.Session"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="120"
+             x:Class="ShodanClient.App.Views.Shell.AccountStatusWidget"
+             x:Name="Root"
+             x:DataType="vm:AccountStatusWidgetViewModel">
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+		<conv:ProfileActiveConverter x:Key="ProfileActiveConverter" />
+	</UserControl.Resources>
+
+	<Border Padding="{StaticResource ShodanThicknessSmall}" Background="{DynamicResource ShodanCardBackgroundBrush}">
+		<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}">
+			<Grid ColumnDefinitions="*,Auto">
+				<StackPanel Grid.Column="0"
+				            Spacing="2"
+				            IsVisible="{Binding Account.Current, Converter={StaticResource HasContentConverter}}">
+					<TextBlock Text="{Binding Account.Current.DisplayName}" FontWeight="Bold" FontSize="12" />
+					<TextBlock Text="{Binding Account.Current.Plan}" FontSize="11" Opacity="0.7" />
+					<TextBlock Text="{Binding Account.Current.QueryCredits, StringFormat='{}{0} query credits'}"
+					           FontSize="11"
+					           Opacity="0.7" />
+				</StackPanel>
+
+				<TextBlock Grid.Column="0"
+				           Text="Not connected"
+				           FontSize="12"
+				           Opacity="0.6"
+				           IsVisible="{Binding Account.Current, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+
+				<Button Grid.Column="1"
+				        Command="{Binding RefreshCommand}"
+				        IsEnabled="{Binding !Account.IsRefreshing}"
+				        ToolTip.Tip="Refresh account status"
+				        Padding="4">
+					<ui:FASymbolIcon Symbol="Refresh" FontSize="14" />
+				</Button>
+			</Grid>
+
+			<Button Content="Switch account ›"
+			        HorizontalAlignment="Stretch"
+			        HorizontalContentAlignment="Left"
+			        FontSize="{StaticResource ShodanFontSizeSmall}"
+			        Background="Transparent"
+			        Padding="4,4">
+				<Button.Flyout>
+					<Flyout Placement="Top">
+						<StackPanel Spacing="{StaticResource ShodanSpacingSmall}" Width="280">
+							<TextBlock Text="Profiles" FontWeight="SemiBold" />
+
+							<ItemsControl ItemsSource="{Binding Profiles.Profiles}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="session:ApiProfileDescriptor">
+										<Border CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+										        Padding="{StaticResource ShodanThicknessSmall}"
+										        Margin="0,0,0,4">
+											<Border.Background>
+												<MultiBinding Converter="{StaticResource ProfileActiveConverter}">
+													<Binding Path="Id" />
+													<Binding ElementName="Root"
+													         Path="((vm:AccountStatusWidgetViewModel)DataContext).Profiles.ActiveProfile.Id" />
+												</MultiBinding>
+											</Border.Background>
+
+											<Grid ColumnDefinitions="*,Auto,Auto">
+												<StackPanel Grid.Column="0" Spacing="0">
+													<StackPanel Orientation="Horizontal" Spacing="4">
+														<TextBlock Text="{Binding Name}"
+														           FontWeight="SemiBold"
+														           FontSize="{StaticResource ShodanFontSizeSmall}" />
+														<TextBlock Foreground="{StaticResource ShodanAccentBrush}"
+														           FontSize="{StaticResource ShodanFontSizeSmall}"
+														           FontWeight="Bold">
+															<TextBlock.IsVisible>
+																<MultiBinding
+																	Converter="{StaticResource ProfileActiveConverter}"
+																	ConverterParameter="Check">
+																	<Binding Path="Id" />
+																	<Binding ElementName="Root"
+																	         Path="((vm:AccountStatusWidgetViewModel)DataContext).Profiles.ActiveProfile.Id" />
+																</MultiBinding>
+															</TextBlock.IsVisible>
+															✓
+														</TextBlock>
+													</StackPanel>
+													<TextBlock Text="{Binding MaskedKey}"
+													           FontFamily="{StaticResource ShodanMonospaceFont}"
+													           FontSize="11"
+													           Opacity="0.7" />
+												</StackPanel>
+
+												<Button Grid.Column="1" Content="Switch" FontSize="11" Padding="6,2"
+												        Command="{Binding ElementName=Root, Path=((vm:AccountStatusWidgetViewModel)DataContext).SwitchProfileCommand}"
+												        CommandParameter="{Binding}" />
+
+												<Button Grid.Column="2" Content="✕" FontSize="11" Padding="6,2"
+												        Background="Transparent"
+												        Foreground="{StaticResource ShodanAccentBrush}"
+												        ToolTip.Tip="Remove profile">
+													<Button.Flyout>
+														<Flyout Placement="Top">
+															<StackPanel Spacing="{StaticResource ShodanSpacingSmall}"
+															            Width="200">
+																<TextBlock TextWrapping="Wrap">
+																	<Run Text="Remove" />
+																	<Run Text="{Binding Name}" FontWeight="Bold" />
+																	<Run Text="? This can't be undone." />
+																</TextBlock>
+																<Button Content="Remove"
+																        HorizontalAlignment="Stretch"
+																        HorizontalContentAlignment="Center"
+																        Background="{StaticResource ShodanAccentBrush}"
+																        Foreground="White"
+																        Command="{Binding ElementName=Root, Path=((vm:AccountStatusWidgetViewModel)DataContext).RemoveProfileCommand}"
+																        CommandParameter="{Binding}" />
+															</StackPanel>
+														</Flyout>
+													</Button.Flyout>
+												</Button>
+											</Grid>
+										</Border>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+
+							<TextBlock Text="No profiles yet."
+							           Opacity="0.6"
+							           FontSize="{StaticResource ShodanFontSizeSmall}"
+							           IsVisible="{Binding Profiles.Profiles, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+
+							<Border BorderBrush="#22808080" BorderThickness="0,1,0,0" Padding="0,8,0,0">
+								<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+									<TextBlock Text="Add profile" FontWeight="SemiBold"
+									           FontSize="{StaticResource ShodanFontSizeSmall}" />
+									<TextBox Text="{Binding NewProfileName}" PlaceholderText="Name (e.g. Work)"
+									         IsEnabled="{Binding !IsBusy}" />
+									<TextBox Text="{Binding NewProfileApiKey}" PlaceholderText="Shodan API key"
+									         PasswordChar="•"
+									         IsEnabled="{Binding !IsBusy}" />
+
+									<TextBlock Text="{Binding AddProfileError}"
+									           Foreground="{StaticResource ShodanAccentBrush}"
+									           TextWrapping="Wrap"
+									           FontSize="{StaticResource ShodanFontSizeSmall}"
+									           IsVisible="{Binding AddProfileError, Converter={StaticResource HasContentConverter}}" />
+
+									<Grid ColumnDefinitions="Auto,Auto">
+										<Button Grid.Column="0"
+										        Content="Add"
+										        Command="{Binding AddProfileCommand}"
+										        IsEnabled="{Binding !IsBusy}"
+										        Background="{StaticResource ShodanAccentBrush}"
+										        Foreground="White" />
+										<ui:FAProgressRing Grid.Column="1"
+										                   IsVisible="{Binding IsBusy}"
+										                   IsActive="{Binding IsBusy}"
+										                   Width="16" Height="16"
+										                   Margin="8,0,0,0"
+										                   VerticalAlignment="Center" />
+									</Grid>
+								</StackPanel>
+							</Border>
+						</StackPanel>
+					</Flyout>
+				</Button.Flyout>
+			</Button>
+		</StackPanel>
+	</Border>
+</UserControl>

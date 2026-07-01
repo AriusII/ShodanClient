@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:shell="using:ShodanClient.App.Views.Shell"
+        xmlns:vm="using:ShodanClient.App.ViewModels.Shell"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        x:Class="ShodanClient.App.Views.MainWindow"
+        x:DataType="vm:ShellViewModel"
+        Icon="/Assets/app.ico"
+        Title="ShodanClient.App"
+        MinWidth="960"
+        MinHeight="600"
+        Width="1280"
+        Height="800">
+
+	<!-- DataContext flows down from the Window (set to ShellViewModel in App.axaml.cs). -->
+	<shell:ShellView />
+
+</Window>

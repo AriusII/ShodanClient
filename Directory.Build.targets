@@ -1,0 +1,11 @@
+<Project>
+
+	<!-- Evaluated after the test SDK sets $(IsTestProject), so it can react to it. -->
+	<PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+		<IsPackable>false</IsPackable>
+		<IsAotCompatible>false</IsAotCompatible>
+		<EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+		<NoWarn>$(NoWarn);CA1707;CA2007</NoWarn>
+	</PropertyGroup>
+
+</Project>

@@ -1,0 +1,146 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Setup"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ShodanClient.App.Views.Setup.SetupView"
+             x:DataType="vm:SetupViewModel">
+
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+	</UserControl.Resources>
+
+	<ScrollViewer>
+		<Grid HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{StaticResource ShodanThicknessLarge}">
+			<StackPanel Spacing="{StaticResource ShodanSpacingMedium}" Width="380">
+
+				<TextBlock Text="Welcome to ShodanClient"
+				           FontSize="{StaticResource ShodanFontSizeTitle}"
+				           FontWeight="Bold"
+				           HorizontalAlignment="Center" />
+
+				<TextBlock TextWrapping="Wrap"
+				           HorizontalAlignment="Center"
+				           TextAlignment="Center"
+				           Opacity="0.8">
+					Enter your Shodan API key to get started. You can find (or generate) one at
+					https://account.shodan.io/
+				</TextBlock>
+
+				<TextBox PlaceholderText="Shodan API key"
+				         Text="{Binding ApiKeyInput}"
+				         PasswordChar="•"
+				         IsEnabled="{Binding !IsBusy}" />
+
+				<TextBlock Text="{Binding ErrorMessage}"
+				           Foreground="Red"
+				           TextWrapping="Wrap"
+				           IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+				<Grid ColumnDefinitions="*,Auto">
+					<Button Grid.Column="0"
+					        Content="Save and connect"
+					        Command="{Binding ValidateAndSaveCommand}"
+					        IsEnabled="{Binding !IsBusy}"
+					        Background="{StaticResource ShodanAccentBrush}"
+					        Foreground="White"
+					        HorizontalAlignment="Stretch"
+					        HorizontalContentAlignment="Center" />
+					<ui:FAProgressRing Grid.Column="1"
+					                   IsVisible="{Binding IsBusy}"
+					                   IsActive="{Binding IsBusy}"
+					                   Width="20" Height="20"
+					                   Margin="8,0,0,0"
+					                   VerticalAlignment="Center" />
+				</Grid>
+
+				<!-- Free preview: no API key required, demonstrates the app before onboarding finishes. -->
+				<Border Background="{DynamicResource ShodanCardBackgroundBrush}"
+				        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+				        Padding="{StaticResource ShodanThicknessMedium}">
+					<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+						<Grid ColumnDefinitions="*,Auto">
+							<TextBlock Grid.Column="0" Text="Try it now — no key needed"
+							           FontSize="{StaticResource ShodanFontSizeNormal}"
+							           FontWeight="SemiBold" />
+							<Border Grid.Column="1"
+							        Background="{StaticResource ShodanAccentBrush}"
+							        CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+							        Padding="8,2">
+								<TextBlock Text="FREE" Foreground="White"
+								           FontSize="{StaticResource ShodanFontSizeSmall}" FontWeight="Bold" />
+							</Border>
+						</Grid>
+						<TextBlock TextWrapping="Wrap"
+						           Opacity="0.7"
+						           FontSize="{StaticResource ShodanFontSizeSmall}"
+						           Text="Look up any IP's open ports, hostnames, tags and known vulnerabilities via the free InternetDB dataset." />
+
+						<Grid ColumnDefinitions="*,Auto,Auto">
+							<TextBox Grid.Column="0"
+							         PlaceholderText="IP address, e.g. 8.8.8.8"
+							         Text="{Binding PreviewIpInput}"
+							         IsEnabled="{Binding !IsBusy}" />
+							<ui:FAProgressRing Grid.Column="1"
+							                   IsVisible="{Binding IsBusy}"
+							                   IsActive="{Binding IsBusy}"
+							                   Width="18" Height="18"
+							                   Margin="8,0"
+							                   VerticalAlignment="Center" />
+							<Button Grid.Column="2"
+							        Margin="8,0,0,0"
+							        Content="Look up"
+							        Command="{Binding PreviewLookupCommand}"
+							        IsEnabled="{Binding !IsBusy}" />
+						</Grid>
+
+						<TextBlock Text="{Binding PreviewError}"
+						           Foreground="Red"
+						           TextWrapping="Wrap"
+						           IsVisible="{Binding PreviewError, Converter={StaticResource HasContentConverter}}" />
+
+						<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}"
+						            IsVisible="{Binding PreviewResult, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Text="{Binding PreviewResult.Ip, StringFormat='Results for {0}'}"
+							           FontWeight="SemiBold" />
+							<TextBlock TextWrapping="Wrap">
+								<Run Text="Ports:" Foreground="Gray" />
+								<Run Text="{Binding PreviewResult.Ports.Count}" />
+								<Run Text=" · Vulnerabilities:" Foreground="Gray" />
+								<Run Text="{Binding PreviewResult.Vulnerabilities.Count}" />
+							</TextBlock>
+
+							<ItemsControl ItemsSource="{Binding PreviewResult.Tags}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<WrapPanel />
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="x:String">
+										<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</StackPanel>
+				</Border>
+
+				<!-- The shell hides its nav pane while this screen is active (see ShellView's
+                     IsPaneVisible), so this is the only way back to Settings — e.g. to switch to a
+                     different saved profile if the active one's key stopped working. -->
+				<Button Content="Already have a profile saved? Manage profiles in Settings ›"
+				        Command="{Binding GoToSettingsCommand}"
+				        Background="Transparent"
+				        HorizontalAlignment="Center"
+				        FontSize="{StaticResource ShodanFontSizeSmall}"
+				        Opacity="0.8" />
+
+			</StackPanel>
+		</Grid>
+	</ScrollViewer>
+</UserControl>

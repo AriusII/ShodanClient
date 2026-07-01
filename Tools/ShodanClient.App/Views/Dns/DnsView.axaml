@@ -1,0 +1,231 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Dns"
+             xmlns:dns="using:ShodanClient.Domain.Dns"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:local="using:ShodanClient.App.Views.Dns"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="ShodanClient.App.Views.Dns.DnsView"
+             x:DataType="vm:DnsViewModel">
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+	</UserControl.Resources>
+
+	<TabControl Margin="{StaticResource ShodanThicknessLarge}">
+
+		<TabItem Header="Domain Lookup">
+			<ScrollViewer>
+				<StackPanel Spacing="{StaticResource ShodanSpacingMedium}" Margin="0,12">
+
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+						<TextBox Text="{Binding DomainInput}" PlaceholderText="example.com" Width="260"
+						         IsEnabled="{Binding !IsBusy}" />
+						<ComboBox ItemsSource="{Binding RecordTypeOptions}"
+						          SelectedItem="{Binding SelectedRecordType}"
+						          Width="120"
+						          IsEnabled="{Binding !IsBusy}" />
+						<CheckBox Content="Include history" IsChecked="{Binding IncludeHistory}"
+						          IsEnabled="{Binding !IsBusy}"
+						          VerticalAlignment="Center" />
+						<Button Content="Look up"
+						        Command="{Binding LookupDomainCommand}"
+						        IsEnabled="{Binding !IsBusy}"
+						        Background="{StaticResource ShodanAccentBrush}"
+						        Foreground="White"
+						        ToolTip.Tip="Uses 1 Shodan query credit per lookup." />
+						<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}"
+						                   IsIndeterminate="True"
+						                   Width="18" Height="18" VerticalAlignment="Center" />
+					</StackPanel>
+					<TextBlock
+						Text="Looking up a domain (and turning a page of its records) consumes 1 Shodan query credit each time."
+						Opacity="0.6"
+						FontSize="{StaticResource ShodanFontSizeSmall}"
+						TextWrapping="Wrap" />
+
+					<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}"
+					            IsVisible="{Binding DomainTags, Converter={StaticResource HasContentConverter}}">
+						<TextBlock Text="Tags" FontWeight="SemiBold" />
+						<ItemsControl ItemsSource="{Binding DomainTags}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+
+					<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}"
+					            IsVisible="{Binding DomainSubdomains, Converter={StaticResource HasContentConverter}}">
+						<TextBlock Text="Subdomains" FontWeight="SemiBold" />
+						<ItemsControl ItemsSource="{Binding DomainSubdomains}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="x:String">
+									<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+
+					<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}">
+						<TextBlock Text="DNS records" FontWeight="SemiBold" />
+						<Grid ColumnDefinitions="2*,1*,2*,1.5*,1.5*"
+						      IsVisible="{Binding DomainRecords, Converter={StaticResource HasContentConverter}}">
+							<TextBlock Grid.Column="0" Text="Subdomain" FontWeight="SemiBold" Opacity="0.7" />
+							<TextBlock Grid.Column="1" Text="Type" FontWeight="SemiBold" Opacity="0.7" />
+							<TextBlock Grid.Column="2" Text="Value" FontWeight="SemiBold" Opacity="0.7" />
+							<TextBlock Grid.Column="3" Text="Last seen" FontWeight="SemiBold" Opacity="0.7" />
+							<TextBlock Grid.Column="4" Text="Ports" FontWeight="SemiBold" Opacity="0.7" />
+						</Grid>
+						<ItemsControl ItemsSource="{Binding DomainRecords}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="dns:DnsRecord">
+									<Border BorderBrush="#22FFFFFF" BorderThickness="0,0,0,1" Padding="0,6">
+										<Grid ColumnDefinitions="2*,1*,2*,1.5*,1.5*">
+											<TextBlock Grid.Column="0" Text="{Binding Subdomain}" />
+											<TextBlock Grid.Column="1" Text="{Binding Type}" FontWeight="SemiBold" />
+											<TextBlock Grid.Column="2" Text="{Binding Value}" TextWrapping="Wrap" />
+											<TextBlock Grid.Column="3"
+											           Text="{Binding LastSeen, StringFormat='{}{0:g}'}" />
+											<TextBlock Grid.Column="4"
+											           Text="{Binding Ports, Converter={x:Static local:PortListToStringConverter.Instance}}" />
+										</Grid>
+									</Border>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+						<TextBlock Text="No DNS records loaded yet."
+						           Opacity="0.6"
+						           IsVisible="{Binding DomainRecords, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+					</StackPanel>
+
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}"
+					            IsEnabled="{Binding !IsBusy}">
+						<Button Content="◀ Prev"
+						        Command="{Binding PreviousDomainPageCommand}"
+						        IsEnabled="{Binding CanGoToPreviousDomainPage}"
+						        ToolTip.Tip="Uses 1 Shodan query credit." />
+						<TextBlock Text="{Binding DomainPage, StringFormat='Page {0}'}" VerticalAlignment="Center" />
+						<Button Content="Next ▶"
+						        Command="{Binding NextDomainPageCommand}"
+						        IsEnabled="{Binding CanGoToNextDomainPage}"
+						        ToolTip.Tip="Uses 1 Shodan query credit." />
+					</StackPanel>
+
+				</StackPanel>
+			</ScrollViewer>
+		</TabItem>
+
+		<TabItem Header="Resolve">
+			<ScrollViewer>
+				<StackPanel Spacing="{StaticResource ShodanSpacingMedium}" Margin="0,12">
+					<TextBlock Text="Hostnames, comma or newline separated. Free — no query credits used."
+					           Opacity="0.7" />
+					<TextBox Text="{Binding ResolveHostnamesInput}"
+					         PlaceholderText="example.com&#10;shodan.io"
+					         AcceptsReturn="True"
+					         TextWrapping="Wrap"
+					         Height="100"
+					         IsEnabled="{Binding !IsBusy}" />
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+						<Button Content="Resolve (free)" Command="{Binding ResolveCommand}"
+						        IsEnabled="{Binding !IsBusy}" />
+						<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}"
+						                   IsIndeterminate="True"
+						                   Width="18" Height="18" VerticalAlignment="Center" />
+					</StackPanel>
+
+					<Grid ColumnDefinitions="2*,2*"
+					      IsVisible="{Binding ResolveResults, Converter={StaticResource HasContentConverter}}">
+						<TextBlock Grid.Column="0" Text="Hostname" FontWeight="SemiBold" Opacity="0.7" />
+						<TextBlock Grid.Column="1" Text="IP address" FontWeight="SemiBold" Opacity="0.7" />
+					</Grid>
+					<ItemsControl ItemsSource="{Binding ResolveResults}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="vm:HostnameResolution">
+								<Border BorderBrush="#22FFFFFF" BorderThickness="0,0,0,1" Padding="0,6">
+									<Grid ColumnDefinitions="2*,2*">
+										<TextBlock Grid.Column="0" Text="{Binding Hostname}" />
+										<TextBlock Grid.Column="1" Text="{Binding IpAddress}" />
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+					<TextBlock Text="No results yet."
+					           Opacity="0.6"
+					           IsVisible="{Binding ResolveResults, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+				</StackPanel>
+			</ScrollViewer>
+		</TabItem>
+
+		<TabItem Header="Reverse">
+			<ScrollViewer>
+				<StackPanel Spacing="{StaticResource ShodanSpacingMedium}" Margin="0,12">
+					<TextBlock Text="IP addresses, comma or newline separated. Free — no query credits used."
+					           Opacity="0.7" />
+					<TextBox Text="{Binding ReverseIpsInput}"
+					         PlaceholderText="8.8.8.8&#10;1.1.1.1"
+					         AcceptsReturn="True"
+					         TextWrapping="Wrap"
+					         Height="100"
+					         IsEnabled="{Binding !IsBusy}" />
+					<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+						<Button Content="Reverse (free)" Command="{Binding ReverseCommand}"
+						        IsEnabled="{Binding !IsBusy}" />
+						<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}"
+						                   IsIndeterminate="True"
+						                   Width="18" Height="18" VerticalAlignment="Center" />
+					</StackPanel>
+
+					<Grid ColumnDefinitions="1.5*,3*"
+					      IsVisible="{Binding ReverseResults, Converter={StaticResource HasContentConverter}}">
+						<TextBlock Grid.Column="0" Text="IP address" FontWeight="SemiBold" Opacity="0.7" />
+						<TextBlock Grid.Column="1" Text="Hostnames" FontWeight="SemiBold" Opacity="0.7" />
+					</Grid>
+					<ItemsControl ItemsSource="{Binding ReverseResults}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="vm:IpReverseResolution">
+								<Border BorderBrush="#22FFFFFF" BorderThickness="0,0,0,1" Padding="0,6">
+									<Grid ColumnDefinitions="1.5*,3*">
+										<TextBlock Grid.Column="0" Text="{Binding IpAddress}" />
+										<ItemsControl Grid.Column="1" ItemsSource="{Binding Hostnames}">
+											<ItemsControl.ItemsPanel>
+												<ItemsPanelTemplate>
+													<WrapPanel Orientation="Horizontal" />
+												</ItemsPanelTemplate>
+											</ItemsControl.ItemsPanel>
+											<ItemsControl.ItemTemplate>
+												<DataTemplate x:DataType="x:String">
+													<controls:TagPill Text="{Binding}" Margin="0,0,4,4" />
+												</DataTemplate>
+											</ItemsControl.ItemTemplate>
+										</ItemsControl>
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+					<TextBlock Text="No results yet."
+					           Opacity="0.6"
+					           IsVisible="{Binding ReverseResults, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+				</StackPanel>
+			</ScrollViewer>
+		</TabItem>
+
+	</TabControl>
+</UserControl>

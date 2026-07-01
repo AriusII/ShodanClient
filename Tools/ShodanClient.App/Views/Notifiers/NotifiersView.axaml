@@ -1,0 +1,134 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Notifiers"
+             xmlns:notifiers="using:ShodanClient.Domain.Notifiers"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="650"
+             x:Class="ShodanClient.App.Views.Notifiers.NotifiersView"
+             x:DataType="vm:NotifiersViewModel">
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+	</UserControl.Resources>
+
+	<Grid ColumnDefinitions="320,*" Margin="16">
+
+		<!-- Left: configured notifiers -->
+		<DockPanel Grid.Column="0" Margin="0,0,16,0">
+			<Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+				<TextBlock Grid.Column="0" Text="Notifiers" FontSize="{StaticResource ShodanFontSizeLarge}"
+				           FontWeight="Bold" VerticalAlignment="Center" />
+				<ui:FAProgressRing Grid.Column="1" IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}"
+				                   IsIndeterminate="True" Width="18" Height="18" VerticalAlignment="Center"
+				                   Margin="0,0,8,0" />
+				<Button Grid.Column="2" Content="Refresh" Command="{Binding LoadCommand}" IsEnabled="{Binding !IsBusy}" />
+			</Grid>
+
+			<Grid>
+				<ListBox ItemsSource="{Binding Notifiers}" SelectedItem="{Binding SelectedNotifier}">
+					<ListBox.ItemTemplate>
+						<DataTemplate x:DataType="notifiers:Notifier">
+							<StackPanel Spacing="2" Margin="0,4">
+								<TextBlock Text="{Binding Provider}" FontWeight="Bold" />
+								<TextBlock Text="{Binding Description}"
+								           Opacity="0.7"
+								           TextTrimming="CharacterEllipsis"
+								           IsVisible="{Binding Description, Converter={x:Static ObjectConverters.IsNotNull}}" />
+								<TextBlock Text="{Binding Id}"
+								           FontSize="12"
+								           Opacity="0.5"
+								           FontFamily="{StaticResource ShodanMonospaceFont}" />
+							</StackPanel>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+
+				<TextBlock Text="No notifiers yet — create one to the right."
+				           Opacity="0.6"
+				           HorizontalAlignment="Center"
+				           Margin="0,24,0,0"
+				           IsVisible="{Binding Notifiers, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+			</Grid>
+		</DockPanel>
+
+		<!-- Right: create + edit -->
+		<ScrollViewer Grid.Column="1">
+			<StackPanel Spacing="24">
+
+				<StackPanel Spacing="8">
+					<TextBlock Text="Create a notifier" FontSize="{StaticResource ShodanFontSizeLarge}"
+					           FontWeight="Bold" />
+					<TextBlock
+						Text="Free — creating, editing and deleting notifiers doesn't use Shodan query or scan credits."
+						Opacity="0.6"
+						FontSize="{StaticResource ShodanFontSizeSmall}" />
+
+					<ComboBox ItemsSource="{Binding Providers}"
+					          SelectedItem="{Binding SelectedProvider}"
+					          PlaceholderText="Choose a provider"
+					          HorizontalAlignment="Stretch"
+					          IsEnabled="{Binding !IsBusy}">
+						<ComboBox.ItemTemplate>
+							<DataTemplate x:DataType="notifiers:NotifierProvider">
+								<TextBlock Text="{Binding Name}" />
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+
+					<TextBlock Text="Select a provider above to see its required arguments."
+					           Opacity="0.6"
+					           IsVisible="{Binding SelectedProvider, Converter={x:Static ObjectConverters.IsNull}}" />
+
+					<TextBox PlaceholderText="Description (optional)" Text="{Binding CreateDescription}"
+					         IsEnabled="{Binding !IsBusy}" />
+
+					<ItemsControl ItemsSource="{Binding CreateArgumentFields}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="vm:NotifierArgumentField">
+								<Grid ColumnDefinitions="140,*" Margin="0,4">
+									<TextBlock Grid.Column="0" Text="{Binding Key}" VerticalAlignment="Center" />
+									<TextBox Grid.Column="1" Text="{Binding Value}" />
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+
+					<Button Content="Create notifier"
+					        Command="{Binding CreateNotifierCommand}"
+					        IsEnabled="{Binding !IsBusy}"
+					        HorizontalAlignment="Left" />
+				</StackPanel>
+
+				<Separator />
+
+				<StackPanel Spacing="8"
+				            IsVisible="{Binding SelectedNotifier, Converter={x:Static ObjectConverters.IsNotNull}}">
+					<TextBlock Text="Edit selected notifier" FontSize="{StaticResource ShodanFontSizeLarge}"
+					           FontWeight="Bold" />
+					<TextBlock Text="{Binding SelectedNotifier.Provider}" Opacity="0.7" />
+
+					<ItemsControl ItemsSource="{Binding EditArgumentFields}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="vm:NotifierArgumentField">
+								<Grid ColumnDefinitions="140,*" Margin="0,4">
+									<TextBlock Grid.Column="0" Text="{Binding Key}" VerticalAlignment="Center" />
+									<TextBox Grid.Column="1" Text="{Binding Value}" />
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<Button Content="Save changes" Command="{Binding UpdateNotifierCommand}"
+						        IsEnabled="{Binding !IsBusy}" />
+						<Button Content="Delete" Command="{Binding DeleteNotifierCommand}"
+						        IsEnabled="{Binding !IsBusy}" />
+					</StackPanel>
+				</StackPanel>
+
+			</StackPanel>
+		</ScrollViewer>
+	</Grid>
+</UserControl>

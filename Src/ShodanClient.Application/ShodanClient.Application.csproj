@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<Description>Service and repository contracts, options, and exceptions for ShodanClient. Depends only on ShodanClient.Domain.</Description>
+		<RootNamespace>ShodanClient.Application</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ShodanClient.Domain\ShodanClient.Domain.csproj"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="ShodanClient.Infrastructure"/>
+		<InternalsVisibleTo Include="ShodanClient.Application.Tests"/>
+		<InternalsVisibleTo Include="ShodanClient.Infrastructure.Tests"/>
+		<!-- NSubstitute mocks internal repository interfaces (e.g. IAlertRepository) via Castle
+				 DynamicProxy, which generates proxy types in a dynamically-created, unsigned assembly named
+				 "DynamicProxyGenAssembly2". That assembly needs its own InternalsVisibleTo grant to implement
+				 an internal interface, separate from the grant to the test project itself. -->
+		<InternalsVisibleTo Include="DynamicProxyGenAssembly2"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Options"/>
+		<PackageReference Include="Microsoft.SourceLink.GitHub">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+</Project>

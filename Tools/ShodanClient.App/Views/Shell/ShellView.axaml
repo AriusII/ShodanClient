@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Shell"
+             xmlns:shell="using:ShodanClient.App.Views.Shell"
+             xmlns:notif="using:ShodanClient.App.Services.Notifications"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="ShodanClient.App.Views.Shell.ShellView"
+             x:Name="Root"
+             x:DataType="vm:ShellViewModel">
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+		<conv:NotificationSeverityToBrushConverter x:Key="SeverityBrushConverter" />
+	</UserControl.Resources>
+
+	<Panel>
+		<DockPanel IsVisible="{Binding !IsBootstrapping}">
+			<shell:StatusBarView DockPanel.Dock="Bottom" />
+
+			<ui:FANavigationView PaneDisplayMode="LeftCompact"
+			                     IsBackButtonVisible="False"
+			                     IsSettingsVisible="False"
+			                     IsPaneVisible="{Binding !IsSetupActive}"
+			                     MenuItemsSource="{Binding Items}"
+			                     FooterMenuItemsSource="{Binding FooterItems}"
+			                     SelectedItem="{Binding SelectedItem}"
+			                     Content="{Binding CurrentViewModel}">
+
+				<ui:FANavigationView.MenuItemTemplate>
+					<DataTemplate x:DataType="vm:NavigationItemViewModel">
+						<ui:FANavigationViewItem Content="{Binding Label}"
+						                         IconSource="{Binding IconSource}"
+						                         IsEnabled="{Binding IsEnabled}"
+						                         ToolTip.Tip="{Binding DisabledReason}" />
+					</DataTemplate>
+				</ui:FANavigationView.MenuItemTemplate>
+
+				<ui:FANavigationView.PaneFooter>
+					<shell:AccountStatusWidget DataContext="{Binding AccountWidget}" />
+				</ui:FANavigationView.PaneFooter>
+
+			</ui:FANavigationView>
+		</DockPanel>
+
+		<!-- Boot splash: shown until the previously-active profile (if any) has been reattached and
+             the first NavigateTo call resolves, so the content area is never silently blank. -->
+		<Grid IsVisible="{Binding IsBootstrapping}" HorizontalAlignment="Center" VerticalAlignment="Center">
+			<StackPanel Spacing="{StaticResource ShodanSpacingMedium}" HorizontalAlignment="Center">
+				<ui:FAProgressRing IsActive="True" Width="32" Height="32" HorizontalAlignment="Center" />
+				<TextBlock Text="Connecting to Shodan…" Opacity="0.8" HorizontalAlignment="Center" />
+			</StackPanel>
+		</Grid>
+
+		<!-- Toast/banner host: every INotificationService.Items entry, most recent first. Persistent
+             banners (e.g. an authentication failure) stay until Dismiss is clicked; toasts auto-expire
+             (see NotificationService). -->
+		<ItemsControl ItemsSource="{Binding Notifications.Items}"
+		              HorizontalAlignment="Right"
+		              VerticalAlignment="Top"
+		              Margin="{StaticResource ShodanThicknessLarge}"
+		              MaxWidth="360">
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Spacing="{StaticResource ShodanSpacingSmall}" />
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+			<ItemsControl.ItemTemplate>
+				<DataTemplate x:DataType="notif:NotificationItem">
+					<Border Background="#F21A1A1A"
+					        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+					        Padding="{StaticResource ShodanThicknessMedium}">
+						<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}">
+							<Grid ColumnDefinitions="4,*,Auto" ColumnSpacing="8">
+								<Border Grid.Column="0"
+								        CornerRadius="2"
+								        Background="{Binding Severity, Converter={StaticResource SeverityBrushConverter}}" />
+
+								<StackPanel Grid.Column="1" Spacing="2">
+									<TextBlock Text="{Binding Title}"
+									           FontWeight="Bold"
+									           TextWrapping="Wrap"
+									           IsVisible="{Binding Title, Converter={StaticResource HasContentConverter}}" />
+									<TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+								</StackPanel>
+
+								<Button Grid.Column="2"
+								        Content="✕"
+								        Padding="4,0"
+								        Background="Transparent"
+								        BorderThickness="0"
+								        VerticalAlignment="Top"
+								        ToolTip.Tip="Dismiss"
+								        Command="{Binding #Root.((vm:ShellViewModel)DataContext).DismissNotificationCommand}"
+								        CommandParameter="{Binding}" />
+							</Grid>
+
+							<Button Content="{Binding ActionLabel}"
+							        HorizontalAlignment="Left"
+							        Margin="12,0,0,0"
+							        IsVisible="{Binding ActionLabel, Converter={StaticResource HasContentConverter}}"
+							        Command="{Binding #Root.((vm:ShellViewModel)DataContext).InvokeNotificationActionCommand}"
+							        CommandParameter="{Binding}" />
+						</StackPanel>
+					</Border>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+	</Panel>
+</UserControl>

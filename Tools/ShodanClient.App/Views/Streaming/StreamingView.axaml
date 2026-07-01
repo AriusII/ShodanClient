@@ -1,0 +1,175 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Streaming"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:domain="using:ShodanClient.Domain.Search"
+             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="650"
+             x:Class="ShodanClient.App.Views.Streaming.StreamingView"
+             x:DataType="vm:StreamingViewModel">
+
+	<!-- Avalonia.Controls.DataGrid ships its own control theme (confirmed present in the installed
+         12.0.1 package as Themes/Fluent.xaml), which FluentAvaloniaTheme doesn't merge automatically.
+         Scoped to this view rather than the shared App.axaml so this module owns its own dependency.
+         NOTE for the consolidated build/visual pass: FluentAvaloniaUI aims for resource-key parity with
+         Avalonia's own FluentTheme so ecosystem controls like this keep working, but that parity hasn't
+         been visually verified here — if the DataGrid renders unstyled/throws a StaticResource lookup
+         error, FluentAvalonia also ships its own DataGrid re-theme at
+         avares://FluentAvalonia/Styling/ControlThemes/BasicControls/DataGrid/DataGridStyles.axaml,
+         which may need to replace this include instead (unverified path — no local copy of the
+         FluentAvaloniaUI package was available to confirm it). -->
+	<UserControl.Styles>
+		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+	</UserControl.Styles>
+
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+		<conv:CountToVisibilityConverter x:Key="CountConverter" />
+		<conv:StreamModeToLabelConverter x:Key="StreamModeLabelConverter" />
+	</UserControl.Resources>
+
+	<Grid RowDefinitions="Auto,Auto,*" Margin="{StaticResource ShodanThicknessMedium}">
+
+		<TextBlock Grid.Row="0" Text="Streaming" FontSize="{StaticResource ShodanFontSizeTitle}" FontWeight="Bold"
+		           Margin="0,0,0,12" />
+
+		<WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+			<ComboBox ItemsSource="{Binding AvailableModes}"
+			          SelectedItem="{Binding Mode}"
+			          IsEnabled="{Binding !IsStreaming}"
+			          Width="190"
+			          Margin="0,0,8,8">
+				<ComboBox.ItemTemplate>
+					<DataTemplate x:DataType="vm:StreamMode">
+						<TextBlock Text="{Binding Converter={StaticResource StreamModeLabelConverter}}" />
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+
+			<TextBox PlaceholderText="ASNs, e.g. 3303, 32475"
+			         Text="{Binding AsnsInput}"
+			         IsVisible="{Binding IsAsnMode}"
+			         IsEnabled="{Binding !IsStreaming}"
+			         Width="220"
+			         Margin="0,0,8,8" />
+
+			<TextBox PlaceholderText="Country codes, e.g. US, DE"
+			         Text="{Binding CountriesInput}"
+			         IsVisible="{Binding IsCountriesMode}"
+			         IsEnabled="{Binding !IsStreaming}"
+			         Width="220"
+			         Margin="0,0,8,8" />
+
+			<TextBox PlaceholderText="Ports, e.g. 22, 80, 443"
+			         Text="{Binding PortsInput}"
+			         IsVisible="{Binding IsPortsMode}"
+			         IsEnabled="{Binding !IsStreaming}"
+			         Width="220"
+			         Margin="0,0,8,8" />
+
+			<TextBox PlaceholderText="CVE IDs, e.g. CVE-2021-44228"
+			         Text="{Binding VulnerabilitiesInput}"
+			         IsVisible="{Binding IsVulnerabilitiesMode}"
+			         IsEnabled="{Binding !IsStreaming}"
+			         Width="240"
+			         Margin="0,0,8,8" />
+
+			<TextBox PlaceholderText="Shodan query"
+			         Text="{Binding QueryInput}"
+			         IsVisible="{Binding IsQueryMode}"
+			         IsEnabled="{Binding !IsStreaming}"
+			         Width="240"
+			         Margin="0,0,8,8" />
+
+			<TextBox PlaceholderText="Alert ID"
+			         Text="{Binding AlertIdInput}"
+			         IsVisible="{Binding IsAlertMode}"
+			         IsEnabled="{Binding !IsStreaming}"
+			         Width="220"
+			         Margin="0,0,8,8" />
+
+			<Button Content="Start" Command="{Binding StartCommand}" Margin="0,0,8,8"
+			        Background="{StaticResource ShodanAccentBrush}" Foreground="White" />
+			<Button Content="Stop" Command="{Binding StopCommand}" Margin="0,0,8,8" />
+
+			<ui:FAProgressRing IsVisible="{Binding IsStreaming}"
+			                   IsActive="{Binding IsStreaming}"
+			                   Width="20"
+			                   Height="20"
+			                   VerticalAlignment="Center"
+			                   Margin="0,0,8,8" />
+
+			<TextBlock Text="{Binding LiveMatches.Count, StringFormat='{}{0} matches'}"
+			           VerticalAlignment="Center"
+			           Opacity="0.7"
+			           Margin="8,0,8,8" />
+
+			<TextBlock Text="{Binding BannersPerSecond, StringFormat='{}{0:F1}/s'}"
+			           VerticalAlignment="Center"
+			           Opacity="0.7"
+			           Margin="0,0,8,8" />
+
+			<!-- Unlike Search's paginated queries, the Streaming API is a firehose of banners already
+                 covered by your plan's streaming access — Shodan does not deduct per-banner query
+                 credits for consuming it. -->
+			<TextBlock Text="Streaming doesn't spend query credits."
+			           VerticalAlignment="Center"
+			           Opacity="0.5"
+			           FontSize="{StaticResource ShodanFontSizeSmall}"
+			           Margin="0,0,8,8" />
+		</WrapPanel>
+
+		<Grid Grid.Row="2" ColumnDefinitions="2*,3*">
+
+			<Grid Grid.Column="0">
+				<DataGrid ItemsSource="{Binding LiveMatches}"
+				          SelectedItem="{Binding SelectedBanner}"
+				          AutoGenerateColumns="False"
+				          IsReadOnly="True"
+				          GridLinesVisibility="Horizontal">
+					<DataGrid.Columns>
+						<DataGridTextColumn x:DataType="domain:Banner" Header="IP" Binding="{Binding IpString}"
+						                    Width="140" />
+						<DataGridTextColumn x:DataType="domain:Banner" Header="Port" Binding="{Binding Port}"
+						                    Width="70" />
+						<DataGridTextColumn x:DataType="domain:Banner" Header="Transport" Binding="{Binding Transport}"
+						                    Width="90" />
+						<DataGridTextColumn x:DataType="domain:Banner" Header="Product" Binding="{Binding Product}"
+						                    Width="140" />
+						<DataGridTextColumn x:DataType="domain:Banner" Header="Organization"
+						                    Binding="{Binding Organization}" Width="160" />
+						<DataGridTextColumn x:DataType="domain:Banner" Header="Country"
+						                    Binding="{Binding Location.CountryName}" Width="120" />
+						<DataGridTextColumn x:DataType="domain:Banner" Header="Timestamp"
+						                    Binding="{Binding Timestamp, StringFormat=g}" Width="150" />
+					</DataGrid.Columns>
+				</DataGrid>
+				<TextBlock Text="Press Start to begin streaming — matches will appear here live."
+				           HorizontalAlignment="Center"
+				           VerticalAlignment="Center"
+				           Opacity="0.6"
+				           TextWrapping="Wrap"
+				           MaxWidth="220"
+				           TextAlignment="Center"
+				           IsHitTestVisible="False"
+				           IsVisible="{Binding LiveMatches.Count, Converter={StaticResource CountConverter}, ConverterParameter=Invert}" />
+			</Grid>
+
+			<Grid Grid.Column="1" Margin="12,0,0,0">
+				<Panel IsVisible="{Binding SelectedBanner, Converter={StaticResource HasContentConverter}}">
+					<controls:BannerDetailView DataContext="{Binding SelectedBanner}"
+					                           OpenInExploitsCommand="{Binding $parent[UserControl].((vm:StreamingViewModel)DataContext).OpenInExploitsCommand}" />
+				</Panel>
+				<TextBlock Text="Select a match to inspect its banner."
+				           HorizontalAlignment="Center"
+				           VerticalAlignment="Center"
+				           Opacity="0.6"
+				           IsVisible="{Binding SelectedBanner, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+			</Grid>
+
+		</Grid>
+	</Grid>
+</UserControl>

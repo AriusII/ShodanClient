@@ -1,0 +1,24 @@
+<Solution>
+	<Folder Name="/Benchmarks/">
+		<Project Path="Benchmarks/ShodanClient.Benchmarks/ShodanClient.Benchmarks.csproj"/>
+	</Folder>
+	<Folder Name="/Samples/">
+		<Project Path="Samples/ShodanClient.Samples.ConsoleApp/ShodanClient.Samples.ConsoleApp.csproj"/>
+	</Folder>
+	<Folder Name="/Src/">
+		<Project Path="Src/ShodanClient.Application/ShodanClient.Application.csproj"/>
+		<Project Path="Src/ShodanClient.Domain/ShodanClient.Domain.csproj"/>
+		<Project Path="Src/ShodanClient.Infrastructure/ShodanClient.Infrastructure.csproj"/>
+		<Project Path="Src/ShodanClient/ShodanClient.csproj"/>
+	</Folder>
+	<Folder Name="/Tests/">
+		<Project Path="Tests/ShodanClient.Application.Tests/ShodanClient.Application.Tests.csproj"/>
+		<Project Path="Tests/ShodanClient.ArchitectureTests/ShodanClient.ArchitectureTests.csproj"/>
+		<Project Path="Tests/ShodanClient.Domain.Tests/ShodanClient.Domain.Tests.csproj"/>
+		<Project Path="Tests/ShodanClient.Infrastructure.Tests/ShodanClient.Infrastructure.Tests.csproj"/>
+		<Project Path="Tests/ShodanClient.Tests/ShodanClient.Tests.csproj"/>
+	</Folder>
+	<Folder Name="/Tools/">
+		<Project Path="Tools/ShodanClient.App/ShodanClient.App.csproj"/>
+	</Folder>
+</Solution>

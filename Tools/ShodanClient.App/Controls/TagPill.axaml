@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="ShodanClient.App.Controls.TagPill"
+             x:Name="Root">
+	<Border Background="#22808080"
+	        CornerRadius="10"
+	        Padding="8,2"
+	        HorizontalAlignment="Left"
+	        VerticalAlignment="Center">
+		<TextBlock Text="{Binding Text, ElementName=Root}"
+		           FontSize="{StaticResource ShodanFontSizeSmall}"
+		           VerticalAlignment="Center" />
+	</Border>
+</UserControl>

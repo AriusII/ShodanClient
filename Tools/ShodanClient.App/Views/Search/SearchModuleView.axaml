@@ -1,0 +1,272 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ShodanClient.App.ViewModels.Search"
+             xmlns:controls="using:ShodanClient.App.Controls"
+             xmlns:conv="using:ShodanClient.App.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:domain="using:ShodanClient.Domain.Search"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ShodanClient.App.Views.Search.SearchModuleView"
+             x:DataType="vm:SearchModuleViewModel">
+
+	<UserControl.Resources>
+		<conv:NullOrEmptyToVisibilityConverter x:Key="HasContentConverter" />
+		<conv:WorstVulnerabilitySeverityToBrushConverter x:Key="VulnSeverityBrushConverter" />
+	</UserControl.Resources>
+
+	<Panel>
+		<Grid RowDefinitions="Auto,*" Margin="{StaticResource ShodanThicknessMedium}"
+		      RowSpacing="{StaticResource ShodanSpacingSmall}">
+
+			<!-- Query builder -->
+			<StackPanel Grid.Row="0" Spacing="{StaticResource ShodanSpacingSmall}">
+
+				<ToggleSwitch OnContent="Raw query" OffContent="Chip builder"
+				              IsChecked="{Binding IsRawQueryMode, Mode=TwoWay}"
+				              IsEnabled="{Binding !IsBusy}" />
+
+				<!-- Chip mode -->
+				<StackPanel Spacing="{StaticResource ShodanSpacingSmall}" IsVisible="{Binding !IsRawQueryMode}">
+					<TextBox Text="{Binding FreeTextTerm, Mode=TwoWay}" PlaceholderText="Free text search terms" />
+
+					<ItemsControl ItemsSource="{Binding AppliedFilters}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<WrapPanel Orientation="Horizontal" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="vm:FilterChip">
+								<Border Background="#22808080" CornerRadius="10" Padding="8,2" Margin="0,0,6,6">
+									<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingXSmall}">
+										<TextBlock Text="{Binding QueryFragment}" VerticalAlignment="Center"
+										           FontFamily="{StaticResource ShodanMonospaceFont}"
+										           FontSize="{StaticResource ShodanFontSizeSmall}" />
+										<Button Content="✕" Padding="4,0" Background="Transparent" BorderThickness="0"
+										        Command="{Binding $parent[UserControl].((vm:SearchModuleViewModel)DataContext).RemoveFilterChipCommand}"
+										        CommandParameter="{Binding}"
+										        ToolTip.Tip="Remove this filter" />
+									</StackPanel>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+
+					<Grid ColumnDefinitions="220,*,Auto" ColumnSpacing="{StaticResource ShodanSpacingSmall}">
+						<AutoCompleteBox Grid.Column="0" ItemsSource="{Binding FilterNameSuggestions}"
+						                 Text="{Binding NewFilterName, Mode=TwoWay}"
+						                 PlaceholderText="filter (e.g. port)" FilterMode="Contains" />
+						<TextBox Grid.Column="1" Text="{Binding NewFilterValue, Mode=TwoWay}" PlaceholderText="value" />
+						<Button Grid.Column="2" Content="Add filter" Command="{Binding AddFilterChipCommand}"
+						        IsEnabled="{Binding !IsBusy}"
+						        ToolTip.Tip="A search with any filter applied uses 1 query credit per page (an unfiltered page 1 is free)." />
+					</Grid>
+					<TextBlock Text="{Binding NewFilterHint}" Opacity="0.7"
+					           FontSize="{StaticResource ShodanFontSizeSmall}" TextWrapping="Wrap"
+					           IsVisible="{Binding NewFilterHint, Converter={StaticResource HasContentConverter}}" />
+
+					<ItemsControl ItemsSource="{Binding RequestedFacets}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<WrapPanel Orientation="Horizontal" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="x:String">
+								<Border Background="#22FA3D3D" CornerRadius="10" Padding="8,2" Margin="0,0,6,6">
+									<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingXSmall}">
+										<TextBlock Text="{Binding}" VerticalAlignment="Center"
+										           FontSize="{StaticResource ShodanFontSizeSmall}" />
+										<Button Content="✕" Padding="4,0" Background="Transparent" BorderThickness="0"
+										        Command="{Binding $parent[UserControl].((vm:SearchModuleViewModel)DataContext).RemoveRequestedFacetCommand}"
+										        CommandParameter="{Binding}"
+										        ToolTip.Tip="Remove this facet" />
+									</StackPanel>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+
+					<Grid ColumnDefinitions="220,Auto" ColumnSpacing="{StaticResource ShodanSpacingSmall}">
+						<AutoCompleteBox Grid.Column="0" ItemsSource="{Binding FacetNameSuggestions}"
+						                 Text="{Binding NewFacetName, Mode=TwoWay}"
+						                 PlaceholderText="summarize by facet (e.g. country)" FilterMode="Contains" />
+						<Button Grid.Column="1" Content="Add facet" Command="{Binding AddRequestedFacetCommand}"
+						        IsEnabled="{Binding !IsBusy}"
+						        ToolTip.Tip="Facets are free when requested alongside a search; they don't cost extra credits." />
+					</Grid>
+				</StackPanel>
+
+				<!-- Raw mode -->
+				<TextBox Text="{Binding RawQueryOverride, Mode=TwoWay}"
+				         PlaceholderText="Raw Shodan query, e.g. apache country:US"
+				         FontFamily="{StaticResource ShodanMonospaceFont}"
+				         IsVisible="{Binding IsRawQueryMode}" />
+
+				<!-- Validation strip: neutral (nothing parsed yet) / success (parsed cleanly) / error -->
+				<Border Background="#14FFFFFF" Padding="{StaticResource ShodanThicknessSmall}"
+				        CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+				        IsVisible="{Binding !HasParsedQuery}">
+					<TextBlock Text="{Binding InterpretedSummary}" TextWrapping="Wrap" Opacity="0.7" />
+				</Border>
+				<Border Background="#2200C853" Padding="{StaticResource ShodanThicknessSmall}"
+				        CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+				        IsVisible="{Binding ShowSuccessBanner}">
+					<TextBlock Text="{Binding InterpretedSummary}" TextWrapping="Wrap" />
+				</Border>
+				<Border Background="#22FA3D3D" Padding="{StaticResource ShodanThicknessSmall}"
+				        CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+				        IsVisible="{Binding HasQueryErrors}">
+					<TextBlock Text="{Binding QueryErrorsSummary}" TextWrapping="Wrap"
+					           Foreground="{StaticResource ShodanAccentBrush}" />
+				</Border>
+				<TextBlock Text="{Binding QueryValidationError}" Foreground="{StaticResource ShodanAccentBrush}"
+				           IsVisible="{Binding QueryValidationError, Converter={StaticResource HasContentConverter}}" />
+
+				<!-- Action bar -->
+				<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+					<Button Content="Preview count (free)" Command="{Binding PreviewCountCommand}"
+					        IsEnabled="{Binding !IsBusy}"
+					        ToolTip.Tip="Counts total matches without spending any query credits." />
+					<TextBlock Text="{Binding PreviewTotal, StringFormat='Preview: {0:N0} results'}"
+					           VerticalAlignment="Center" Opacity="0.8"
+					           IsVisible="{Binding PreviewTotal, Converter={StaticResource HasContentConverter}}" />
+					<Button Content="Search" Command="{Binding SearchCommand}"
+					        Background="{StaticResource ShodanAccentBrush}" Foreground="White"
+					        IsEnabled="{Binding !IsBusy}"
+					        ToolTip.Tip="Free for an unfiltered page 1; adding a filter or paging further uses 1 query credit per page." />
+					<ui:FAProgressRing IsVisible="{Binding IsBusy}" IsActive="{Binding IsBusy}" Width="18" Height="18" />
+				</StackPanel>
+			</StackPanel>
+
+			<!-- Results + facets -->
+			<Grid Grid.Row="1" ColumnDefinitions="*,300" ColumnSpacing="{StaticResource ShodanSpacingSmall}">
+
+				<Grid Grid.Column="0" RowDefinitions="*,Auto" RowSpacing="{StaticResource ShodanSpacingSmall}">
+					<Panel Grid.Row="0">
+						<DataGrid ItemsSource="{Binding Matches}"
+						          SelectedItem="{Binding SelectedBannerForDetail, Mode=TwoWay}"
+						          AutoGenerateColumns="False" IsReadOnly="True"
+						          GridLinesVisibility="Horizontal">
+							<DataGrid.Columns>
+								<DataGridTextColumn x:DataType="domain:Banner" Header="IP" Binding="{Binding IpString}"
+								                    Width="140" />
+								<DataGridTextColumn x:DataType="domain:Banner" Header="Port" Binding="{Binding Port}"
+								                    Width="80" />
+								<DataGridTextColumn x:DataType="domain:Banner" Header="Org"
+								                    Binding="{Binding Organization}" Width="*" />
+								<DataGridTextColumn x:DataType="domain:Banner" Header="Country"
+								                    Binding="{Binding Location.CountryName}" Width="140" />
+								<DataGridTextColumn x:DataType="domain:Banner" Header="Product"
+								                    Binding="{Binding Product}" Width="160" />
+								<DataGridTemplateColumn Header="Vulns" Width="70">
+									<DataGridTemplateColumn.CellTemplate>
+										<DataTemplate x:DataType="domain:Banner">
+											<Panel Margin="4,0" HorizontalAlignment="Left">
+												<Border
+													Background="{Binding Vulnerabilities, Converter={StaticResource VulnSeverityBrushConverter}}"
+													CornerRadius="{StaticResource ShodanCornerRadiusSmallValue}"
+													Padding="6,1"
+													IsVisible="{Binding Vulnerabilities, Converter={StaticResource HasContentConverter}}"
+													ToolTip.Tip="{Binding Vulnerabilities.Count, StringFormat='{}{0} known CVE(s) — color reflects worst severity (KEV/CVSS)'}">
+													<TextBlock Text="{Binding Vulnerabilities.Count}"
+													           Foreground="White" FontWeight="SemiBold"
+													           FontSize="{StaticResource ShodanFontSizeSmall}" />
+												</Border>
+												<TextBlock Text="0" Opacity="0.4"
+												           FontSize="{StaticResource ShodanFontSizeSmall}"
+												           IsVisible="{Binding Vulnerabilities, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+											</Panel>
+										</DataTemplate>
+									</DataGridTemplateColumn.CellTemplate>
+								</DataGridTemplateColumn>
+							</DataGrid.Columns>
+						</DataGrid>
+
+						<StackPanel Spacing="{StaticResource ShodanSpacingXSmall}" HorizontalAlignment="Center"
+						            VerticalAlignment="Center"
+						            IsVisible="{Binding Matches, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}">
+							<TextBlock Text="No matches yet." Opacity="0.6" HorizontalAlignment="Center" />
+							<TextBlock Text="Run a search to see results here." Opacity="0.4"
+							           FontSize="{StaticResource ShodanFontSizeSmall}" HorizontalAlignment="Center" />
+						</StackPanel>
+					</Panel>
+
+					<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingSmall}">
+						<Button Content="Load next page (uses credits)" Command="{Binding LoadNextPageCommand}"
+						        IsEnabled="{Binding !IsBusy}"
+						        ToolTip.Tip="Loading page 2+ costs 1 query credit per 100 results." />
+						<TextBlock Text="{Binding CurrentPage, StringFormat='Page {0}'}" VerticalAlignment="Center" />
+						<TextBlock Text="{Binding CurrentResult.Total, StringFormat='Total matches: {0:N0}'}"
+						           VerticalAlignment="Center" Opacity="0.8" />
+					</StackPanel>
+				</Grid>
+
+				<Border Grid.Column="1" Background="#14FFFFFF"
+				        CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}"
+				        Padding="{StaticResource ShodanThicknessXSmall}">
+					<Expander Header="Facets" IsExpanded="True">
+						<ScrollViewer>
+							<StackPanel Spacing="{StaticResource ShodanSpacingSmall}">
+								<TextBlock
+									Text="Clicking a value adds it as a filter and re-runs the search — uses 1 query credit."
+									Opacity="0.6" FontSize="{StaticResource ShodanFontSizeSmall}"
+									TextWrapping="Wrap" Margin="4,4,4,0"
+									IsVisible="{Binding FacetGroups, Converter={StaticResource HasContentConverter}}" />
+								<ItemsControl ItemsSource="{Binding FacetGroups}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="vm:FacetGroupDisplay">
+											<StackPanel Margin="4,0,4,12">
+												<TextBlock Text="{Binding Name}" FontWeight="Bold" Margin="0,0,0,4" />
+												<ItemsControl ItemsSource="{Binding Values}">
+													<ItemsControl.ItemTemplate>
+														<DataTemplate x:DataType="vm:FacetValueRow">
+															<Button
+																Command="{Binding $parent[UserControl].((vm:SearchModuleViewModel)DataContext).UseFacetValueCommand}"
+																CommandParameter="{Binding}"
+																HorizontalAlignment="Stretch"
+																HorizontalContentAlignment="Stretch"
+																Background="Transparent" Padding="4,2"
+																ToolTip.Tip="{Binding Value, StringFormat='Filter by this value and re-run the search (uses 1 query credit): {0}'}">
+																<Grid ColumnDefinitions="*,Auto">
+																	<TextBlock Grid.Column="0" Text="{Binding Value}"
+																	           TextTrimming="CharacterEllipsis" />
+																	<TextBlock Grid.Column="1" Text="{Binding Count}"
+																	           Opacity="0.6" Margin="8,0,0,0" />
+																</Grid>
+															</Button>
+														</DataTemplate>
+													</ItemsControl.ItemTemplate>
+												</ItemsControl>
+											</StackPanel>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+								<TextBlock Text="No facets requested. Add one above to summarize results."
+								           Opacity="0.5" FontSize="{StaticResource ShodanFontSizeSmall}"
+								           TextWrapping="Wrap" Margin="{StaticResource ShodanThicknessXSmall}"
+								           IsVisible="{Binding FacetGroups, Converter={StaticResource HasContentConverter}, ConverterParameter=Invert}" />
+							</StackPanel>
+						</ScrollViewer>
+					</Expander>
+				</Border>
+			</Grid>
+		</Grid>
+
+		<!-- Drill-down detail overlay -->
+		<Border Background="#CC101010"
+		        IsVisible="{Binding SelectedBannerForDetail, Converter={StaticResource HasContentConverter}}">
+			<Border Background="#FF1A1A1A" CornerRadius="{StaticResource ShodanCornerRadiusMediumValue}" Margin="48"
+			        MaxWidth="900" HorizontalAlignment="Center">
+				<DockPanel>
+					<Button DockPanel.Dock="Top" Content="Close" HorizontalAlignment="Right"
+					        Margin="{StaticResource ShodanThicknessSmall}"
+					        Command="{Binding CloseBannerDetailCommand}" />
+					<controls:BannerDetailView DataContext="{Binding SelectedBannerForDetail}" />
+				</DockPanel>
+			</Border>
+		</Border>
+	</Panel>
+</UserControl>

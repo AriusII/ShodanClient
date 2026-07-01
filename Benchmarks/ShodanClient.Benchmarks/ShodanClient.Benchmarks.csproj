@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>ShodanClient.Benchmarks</RootNamespace>
+		<!-- CA1822: BenchmarkDotNet requires benchmark methods to be instance methods, even when
+				 they don't touch instance state. -->
+		<NoWarn>$(NoWarn);CA1822</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Src\ShodanClient\ShodanClient.csproj"/>
+		<ProjectReference Include="..\..\Src\ShodanClient.Domain\ShodanClient.Domain.csproj"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="BenchmarkDotNet"/>
+	</ItemGroup>
+
+</Project>
