@@ -44,7 +44,7 @@ jobs:
 
       - name: Pack
         run: >
-          dotnet pack Src/ShodanClient/ShodanClient.csproj --no-build --configuration Release
+          dotnet pack Src/ShodanClient/ShodanClient.csproj --configuration Release
           --output ./artifacts -p:PackageVersion=${{ steps.version.outputs.value }}
 
       - name: NuGet login (trusted publishing)

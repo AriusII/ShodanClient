@@ -53,7 +53,7 @@ jobs:
           retention-days: 7
 
       - name: Pack
-        run: dotnet pack Src/ShodanClient/ShodanClient.csproj --no-build --configuration Release --output ./artifacts
+        run: dotnet pack Src/ShodanClient/ShodanClient.csproj --configuration Release --output ./artifacts
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v7
