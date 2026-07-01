@@ -72,7 +72,7 @@ jobs:
 
       - name: Zip
         run: >
-          Compress-Archive -Path ./publish/${{ matrix.rid }}/* -DestinationPath
+          Get-ChildItem ./publish/${{ matrix.rid }} -Exclude *.pdb | Compress-Archive -DestinationPath
           ShodanClient.App-${{ needs.test.outputs.version }}-${{ matrix.rid }}.zip
 
       - name: Upload artifact
