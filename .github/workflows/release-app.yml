@@ -76,7 +76,7 @@ jobs:
           ShodanClient.App-${{ needs.test.outputs.version }}-${{ matrix.rid }}.zip
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-${{ matrix.rid }}
           path: ShodanClient.App-${{ needs.test.outputs.version }}-${{ matrix.rid }}.zip
