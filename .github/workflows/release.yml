@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 env:
   DOTNET_NOLOGO: true
@@ -46,10 +47,16 @@ jobs:
           dotnet pack Src/ShodanClient/ShodanClient.csproj --no-build --configuration Release
           --output ./artifacts -p:PackageVersion=${{ steps.version.outputs.value }}
 
+      - name: NuGet login (trusted publishing)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push to NuGet.org
         run: >
           dotnet nuget push "./artifacts/*.nupkg"
-          --api-key ${{ secrets.NUGET_API_KEY }}
+          --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
