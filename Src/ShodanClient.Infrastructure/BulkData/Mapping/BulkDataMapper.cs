@@ -24,7 +24,10 @@ internal static class BulkDataMapper
 	{
 		Name = dto.Name ?? string.Empty,
 		Size = dto.Size,
-		Url = Uri.TryCreate(dto.Url, UriKind.Absolute, out var uri) ? uri : null,
+		Url = Uri.TryCreate(dto.Url, UriKind.Absolute, out var uri) &&
+			(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+				? uri
+				: null,
 		Sha1 = dto.Sha1,
 		Timestamp = ShodanValueParsers.ParseTimestamp(dto.Timestamp)
 	};
