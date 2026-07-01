@@ -88,8 +88,6 @@ dependency.
 dotnet add package ShodanClient
 ```
 
-*(not yet published)*
-
 ## Configuration
 
 ```jsonc
