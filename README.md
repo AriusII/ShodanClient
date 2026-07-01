@@ -11,7 +11,7 @@ covering all five API surfaces: **Search**, **On-Demand Scanning**, **Network Al
 ** and **InternetDB**.
 
 > **Status:** feature-complete against Shodan's published REST, Streaming, Trends and InternetDB APIs.
-> Native-AOT/trim-safe, source-generated JSON throughout. Not yet published to NuGet.
+> Native-AOT/trim-safe, source-generated JSON throughout.
 
 ## Why
 
