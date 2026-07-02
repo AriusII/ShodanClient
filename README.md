@@ -1,14 +1,14 @@
 # ShodanClient
-
+[![C# 14](https://img.shields.io/badge/C%23-14-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/whats-new/csharp-14)
+[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![Native AOT](https://img.shields.io/badge/Native%20AOT-ready-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/dotnet/core/deploying/native-aot/)
 [![CI](https://github.com/AriusII/ShodanClient/actions/workflows/ci.yml/badge.svg)](https://github.com/AriusII/ShodanClient/actions/workflows/ci.yml)
 [![Release](https://github.com/AriusII/ShodanClient/actions/workflows/release.yml/badge.svg)](https://github.com/AriusII/ShodanClient/actions/workflows/release.yml)
 [![NuGet](https://img.shields.io/nuget/v/ShodanClient.svg)](https://www.nuget.org/packages/ShodanClient)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A modern, fully-typed, high-performance .NET 10 / C# 14 client for the [Shodan API](https://developer.shodan.io/api)
-covering all five API surfaces: **Search**, **On-Demand Scanning**, **Network Alerts**, **Notifiers**, **Directory**, *
-*DNS**, **Account**, **Organization**, **Bulk Data**, **Utility**, **API Status**, **Streaming**, **Trends**, **Exploits
-** and **InternetDB**.
+covering all five API surfaces: **Search**, **On-Demand Scanning**, **Network Alerts**, **Notifiers**, **Directory**, **DNS**, **Account**, **Organization**, **Bulk Data**, **Utility**, **API Status**, **Streaming**, **Trends**, **Exploits** and **InternetDB**.
 
 > **Status:** feature-complete against Shodan's published REST, Streaming, Trends and InternetDB APIs.
 > Native-AOT/trim-safe, source-generated JSON throughout.
