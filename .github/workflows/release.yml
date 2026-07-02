@@ -36,10 +36,10 @@ jobs:
             exit 1
           fi
 
-      - name: Ensure dispatched from main
-        if: github.ref != 'refs/heads/main'
+      - name: Ensure dispatched from master
+        if: github.ref != 'refs/heads/master'
         run: |
-          echo "::error::Releases must be dispatched from 'main' (got '${{ github.ref_name }}')."
+          echo "::error::Releases must be dispatched from 'master' (got '${{ github.ref_name }}')."
           exit 1
 
       - name: Ensure tag does not already exist
