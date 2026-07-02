@@ -75,9 +75,15 @@
 			<ScrollViewer>
 				<StackPanel Spacing="{StaticResource ShodanSpacingMedium}">
 
-					<!-- InternetDB mode: a simple field list, no per-service banners are available. -->
-					<StackPanel DataContext="{Binding DbResult}"
-					            Spacing="{StaticResource ShodanSpacingSmall}"
+					<!-- InternetDB mode: a simple field list, no per-service banners are available.
+					     DataContext is assigned on this outer, un-typed Panel (so "{Binding DbResult}"
+					     still resolves against the ambient HostLookupViewModel) while x:DataType for the
+					     new InternetDbHost scope is declared one level down on the StackPanel: declaring
+					     both DataContext and x:DataType on the same element makes the compiled-bindings
+					     compiler resolve the DataContext binding itself against the new x:DataType instead
+					     of the parent's, which is what broke this before. -->
+					<Panel DataContext="{Binding DbResult}">
+					<StackPanel Spacing="{StaticResource ShodanSpacingSmall}"
 					            x:DataType="idb:InternetDbHost"
 					            IsVisible="{Binding Converter={StaticResource HasContentConverter}}">
 						<TextBlock Text="{Binding Ip}" FontSize="{StaticResource ShodanFontSizeLarge}"
@@ -165,10 +171,13 @@
 							</ItemsControl.ItemTemplate>
 						</ItemsControl>
 					</StackPanel>
+					</Panel>
 
-					<!-- Full Shodan mode: host summary + one BannerDetailView per collected service. -->
-					<StackPanel DataContext="{Binding Result}"
-					            Spacing="{StaticResource ShodanSpacingSmall}"
+					<!-- Full Shodan mode: host summary + one BannerDetailView per collected service.
+					     Same DataContext/x:DataType split as the InternetDB block above, and for the same
+					     reason. -->
+					<Panel DataContext="{Binding Result}">
+					<StackPanel Spacing="{StaticResource ShodanSpacingSmall}"
 					            x:DataType="domain:Host"
 					            IsVisible="{Binding Converter={StaticResource HasContentConverter}}">
 						<StackPanel Orientation="Horizontal" Spacing="{StaticResource ShodanSpacingMedium}">
@@ -293,6 +302,7 @@
 							</ItemsControl.ItemTemplate>
 						</ItemsControl>
 					</StackPanel>
+					</Panel>
 
 				</StackPanel>
 			</ScrollViewer>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ShodanClient.App Windows installer (WiX Toolset v5).
+
+  Built per-architecture from CI via:
+    wix build Product.wxs -arch <x64|arm64> -ext WixToolset.UI.wixext
+      -d ProductVersion=<Major.Minor.Patch> -d PublishDir=<absolute path to dotnet publish output>
+
+  UpgradeCodes below are permanent product identities, generated once and never to be
+  regenerated (regenerating one breaks upgrade detection for everyone who installed under
+  the old code, producing a ghost side-by-side install instead of an in-place upgrade).
+  x64 and arm64 intentionally use different UpgradeCodes: they are independent upgrade
+  chains, since an x64 install (potentially running under emulation) and a native arm64
+  install should never try to "upgrade" each other.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+	<?if $(sys.BUILDARCH) = x64 ?>
+		<?define UpgradeCode = "B7FB7C8C-34A0-4537-AA9F-951575FA5C46" ?>
+	<?elseif $(sys.BUILDARCH) = arm64 ?>
+		<?define UpgradeCode = "AD634759-2B48-4F13-8EAE-177C870065B8" ?>
+	<?else?>
+		<?error Unsupported build architecture "$(sys.BUILDARCH)". This product only ships x64 and arm64 installers. ?>
+	<?endif?>
+
+	<Package Name="ShodanClient.App"
+	         Manufacturer="AriusII"
+	         Version="$(var.ProductVersion)"
+	         UpgradeCode="$(var.UpgradeCode)"
+	         Language="1033">
+
+		<MajorUpgrade
+			AllowDowngrades="no"
+			DowngradeErrorMessage="A newer version of [ProductName] is already installed. Uninstall it first if you need to downgrade." />
+
+		<MediaTemplate EmbedCab="yes" />
+
+		<Icon Id="AppIcon.ico" SourceFile="Tools\ShodanClient.App\Assets\app.ico" />
+		<Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+		<Property Id="ARPURLINFOABOUT" Value="https://github.com/AriusII/ShodanClient" />
+		<Property Id="ARPNOREPAIR" Value="yes" />
+
+		<WixVariable Id="WixUILicenseRtf" Value="Tools\ShodanClient.App\Installer\License.rtf" />
+		<ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+		<Feature Id="Main" Title="ShodanClient.App" Level="1">
+			<ComponentGroupRef Id="AppFiles" />
+			<ComponentRef Id="ApplicationShortcut" />
+		</Feature>
+
+	</Package>
+
+	<Fragment>
+		<StandardDirectory Id="ProgramFiles64Folder">
+			<Directory Id="INSTALLFOLDER" Name="ShodanClient.App" />
+		</StandardDirectory>
+
+		<StandardDirectory Id="ProgramMenuFolder">
+			<!-- Shortcut lives directly in the shared Start Menu Programs folder; no app-specific
+			     subfolder is created, so there is nothing extra to remove on uninstall. -->
+			<Component Id="ApplicationShortcut" Guid="*">
+				<Shortcut Id="ApplicationStartMenuShortcut"
+				          Name="ShodanClient Desktop"
+				          Description="Query the Shodan API for host, search, and DNS intelligence"
+				          Target="[INSTALLFOLDER]ShodanClient.App.exe"
+				          WorkingDirectory="INSTALLFOLDER"
+				          Icon="AppIcon.ico" />
+				<RegistryValue Root="HKMU"
+				               Key="Software\AriusII\ShodanClient.App"
+				               Name="Installed"
+				               Type="integer"
+				               Value="1"
+				               KeyPath="yes" />
+			</Component>
+		</StandardDirectory>
+	</Fragment>
+
+	<Fragment>
+		<!-- Glob-harvests the entire dotnet-publish output directly (this does not go through the
+		     CI zip step's own filtering, so pdb/xml must be excluded here independently). Exclude
+		     patterns must be rooted the same way as the Include pattern to actually match: a
+		     relative "**\*.pdb" here would resolve against this .wxs file's own directory instead
+		     of $(var.PublishDir), and would silently exclude nothing. -->
+		<ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+			<Files Include="$(var.PublishDir)\**">
+				<Exclude Files="$(var.PublishDir)\**\*.pdb" />
+				<Exclude Files="$(var.PublishDir)\**\*.xml" />
+			</Files>
+		</ComponentGroup>
+	</Fragment>
+
+</Wix>

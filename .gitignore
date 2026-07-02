@@ -34,6 +34,11 @@ artifacts/
 # BenchmarkDotNet
 BenchmarkDotNet.Artifacts/
 
+# WiX / App publish output (local packaging test runs)
+/publish/
+*.msi
+*.wixpdb
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -15,12 +15,11 @@ namespace ShodanClient.App.ViewModels.Shell;
 /// <remarks>Creates the widget view model.</remarks>
 public sealed partial class AccountStatusWidgetViewModel(
 	IAccountSessionService account,
-	IProfileService profiles,
-	bool isBusy) : ObservableObject
+	IProfileService profiles) : ObservableObject
 {
 	[ObservableProperty] public partial string? AddProfileError { get; set; }
 
-	[ObservableProperty] public partial bool IsBusy { get; set; } = isBusy;
+	[ObservableProperty] public partial bool IsBusy { get; set; }
 
 	[ObservableProperty] public partial string NewProfileApiKey { get; set; } = string.Empty;
 

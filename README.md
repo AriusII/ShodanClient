@@ -1,7 +1,7 @@
 # ShodanClient
 
 [![CI](https://github.com/AriusII/ShodanClient/actions/workflows/ci.yml/badge.svg)](https://github.com/AriusII/ShodanClient/actions/workflows/ci.yml)
-[![Release App](https://github.com/AriusII/ShodanClient/actions/workflows/release-app.yml/badge.svg)](https://github.com/AriusII/ShodanClient/actions/workflows/release-app.yml)
+[![Release](https://github.com/AriusII/ShodanClient/actions/workflows/release.yml/badge.svg)](https://github.com/AriusII/ShodanClient/actions/workflows/release.yml)
 [![NuGet](https://img.shields.io/nuget/v/ShodanClient.svg)](https://www.nuget.org/packages/ShodanClient)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -109,8 +109,9 @@ See [`Samples/ShodanClient.Samples.ConsoleApp`](Samples/ShodanClient.Samples.Con
 ## Tools
 
 [`Tools/ShodanClient.App`](Tools/ShodanClient.App) is an Avalonia desktop GUI built on top of the SDK, Windows-only for
-now. It ships as Native AOT, self-contained zips for `win-x64`/`win-arm64` via
-[GitHub Releases](https://github.com/AriusII/ShodanClient/releases), tagged `app-vX.Y.Z`.
+now. It ships as Native AOT, self-contained `.zip` archives and `.msi` installers for `win-x64`/`win-arm64`, built and
+published from the same [GitHub Release](https://github.com/AriusII/ShodanClient/releases) pipeline as the SDK
+package, tagged `vX.Y.Z`. Each release also includes a `SHA256SUMS.txt` for integrity verification.
 
 ## License
 

@@ -4,10 +4,19 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (Major.Minor.Patch, e.g. 1.4.0 — no leading v)"
+        required: true
+        type: string
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 env:
   DOTNET_NOLOGO: true
@@ -15,9 +24,49 @@ env:
   CI: true
 
 jobs:
-  release:
-    name: Pack and publish
+  dispatch-tag:
+    name: Create release tag
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    steps:
+      - name: Validate version format
+        run: |
+          if [[ ! "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'${{ inputs.version }}' is not valid. Expected Major.Minor.Patch, e.g. 1.4.0."
+            exit 1
+          fi
+
+      - name: Ensure dispatched from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Releases must be dispatched from 'main' (got '${{ github.ref_name }}')."
+          exit 1
+
+      - name: Ensure tag does not already exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${{ github.repository }}/git/refs/tags/v${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "::error::Tag v${{ inputs.version }} already exists."
+            exit 1
+          fi
+
+      - name: Create and push the tag
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TAG_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/tags/v${{ inputs.version }}" -f sha="${{ github.sha }}"
+
+      - name: Summary
+        run: echo "Tag v${{ inputs.version }} pushed. The real release run starts automatically." >> "$GITHUB_STEP_SUMMARY"
+
+  build-test:
+    name: Build and test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -38,14 +87,35 @@ jobs:
       - name: Test
         run: dotnet test ShodanClient.slnx --no-build --configuration Release
 
-      - name: Compute package version
+      - name: Compute version
         id: version
         run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+  publish-nuget:
+    name: Publish to NuGet.org
+    if: github.event_name == 'push'
+    needs: build-test
+    runs-on: ubuntu-latest
+    environment: Release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore ShodanClient.slnx
 
       - name: Pack
         run: >
           dotnet pack Src/ShodanClient/ShodanClient.csproj --configuration Release
-          --output ./artifacts -p:PackageVersion=${{ steps.version.outputs.value }}
+          --output ./artifacts -p:PackageVersion=${{ needs.build-test.outputs.version }}
 
       - name: NuGet login (trusted publishing)
         id: nuget-login
@@ -60,8 +130,96 @@ jobs:
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-package
+          path: ./artifacts/*.*nupkg
+          retention-days: 7
+
+  publish-app:
+    name: Publish App (${{ matrix.rid }})
+    if: github.event_name == 'push'
+    needs: build-test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+            wixArch: x64
+          - rid: win-arm64
+            os: windows-11-arm
+            wixArch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Publish
+        run: >
+          dotnet publish Tools/ShodanClient.App/ShodanClient.App.csproj --configuration Release
+          --runtime ${{ matrix.rid }} --self-contained true --output ./publish/${{ matrix.rid }}
+          -p:PublishAot=true -p:Version=${{ needs.build-test.outputs.version }}
+
+      - name: Zip
+        run: >
+          Get-ChildItem ./publish/${{ matrix.rid }} -Exclude '*.pdb','*.xml' | Compress-Archive
+          -DestinationPath ShodanClient.App-${{ needs.build-test.outputs.version }}-${{ matrix.rid }}.zip
+
+      - name: Install WiX
+        run: dotnet tool install --global wix --version 5.0.2
+
+      - name: Add WiX UI extension
+        run: wix extension add --global WixToolset.UI.wixext/5.0.2
+
+      - name: Build MSI
+        run: >
+          wix build Tools/ShodanClient.App/Installer/Product.wxs
+          -arch ${{ matrix.wixArch }} -ext WixToolset.UI.wixext
+          -d ProductVersion=${{ needs.build-test.outputs.version }}
+          -d PublishDir="${{ github.workspace }}\publish\${{ matrix.rid }}"
+          -o ShodanClient.App-${{ needs.build-test.outputs.version }}-${{ matrix.rid }}.msi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-${{ matrix.rid }}
+          path: |
+            ShodanClient.App-${{ needs.build-test.outputs.version }}-${{ matrix.rid }}.zip
+            ShodanClient.App-${{ needs.build-test.outputs.version }}-${{ matrix.rid }}.msi
+          retention-days: 7
+
+  create-release:
+    name: Create GitHub Release
+    if: github.event_name == 'push'
+    needs: [build-test, publish-nuget, publish-app]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: "*"
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Checksums
+        run: cd artifacts && sha256sum * > SHA256SUMS.txt
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
-          files: ./artifacts/*.*nupkg
+          files: |
+            ./artifacts/*.*nupkg
+            ./artifacts/*.zip
+            ./artifacts/*.msi
+            ./artifacts/SHA256SUMS.txt

@@ -15,5 +15,5 @@ Steps to reproduce the behavior, including which screen/module you were using.
 What you expected to happen.
 
 **Environment**
-- App version / release tag downloaded (e.g. `app-v1.0.0`):
+- App version / release tag downloaded (e.g. `v1.4.0`):
 - OS + architecture (`win-x64` / `win-arm64`):

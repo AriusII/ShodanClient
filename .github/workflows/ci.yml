@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: read
@@ -87,3 +87,43 @@ jobs:
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
+
+  changes:
+    name: Detect App changes
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Filter
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            app:
+              - 'Src/**'
+              - 'Tools/ShodanClient.App/**'
+              - 'Directory.Build.props'
+              - 'Directory.Packages.props'
+              - 'global.json'
+
+  app-aot-smoke:
+    name: App AOT publish smoke test
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Publish (AOT smoke test)
+        run: >
+          dotnet publish Tools/ShodanClient.App/ShodanClient.App.csproj --configuration Release
+          --runtime win-x64 --self-contained true --output ./publish/smoke -p:PublishAot=true
