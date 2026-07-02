@@ -119,7 +119,7 @@ public class JsonScaleBenchmarks
 
 			var count = (FacetItemCount - i).ToString(CultureInfo.InvariantCulture);
 			var item = "{ \"count\": " + count + ", \"value\": \"" + facetName + "-" +
-			           i.ToString(CultureInfo.InvariantCulture) + "\" }";
+					   i.ToString(CultureInfo.InvariantCulture) + "\" }";
 			items.Append(item);
 		}
 

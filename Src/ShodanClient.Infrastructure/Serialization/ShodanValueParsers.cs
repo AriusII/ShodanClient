@@ -30,11 +30,11 @@ internal static class ShodanValueParsers
 		}
 
 		if (DateTime.TryParseExact(
-			    value,
-			    TimestampFormats,
-			    CultureInfo.InvariantCulture,
-			    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-			    out var exact))
+				value,
+				TimestampFormats,
+				CultureInfo.InvariantCulture,
+				DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+				out var exact))
 		{
 			return new DateTimeOffset(exact, TimeSpan.Zero);
 		}

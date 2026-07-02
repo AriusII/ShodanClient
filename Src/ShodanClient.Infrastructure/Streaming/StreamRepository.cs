@@ -16,8 +16,8 @@ internal sealed class StreamRepository(StreamingChannel channel) : IStreamReposi
 	{
 		var route = ShodanRoutes.Streaming.AllBanners();
 		await foreach (var dto in channel
-			               .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
-			               .ConfigureAwait(false))
+						   .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
+						   .ConfigureAwait(false))
 		{
 			yield return dto.ToDomain();
 		}
@@ -29,8 +29,8 @@ internal sealed class StreamRepository(StreamingChannel channel) : IStreamReposi
 	{
 		var route = ShodanRoutes.Streaming.Asn(asns);
 		await foreach (var dto in channel
-			               .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
-			               .ConfigureAwait(false))
+						   .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
+						   .ConfigureAwait(false))
 		{
 			yield return dto.ToDomain();
 		}
@@ -42,8 +42,8 @@ internal sealed class StreamRepository(StreamingChannel channel) : IStreamReposi
 	{
 		var route = ShodanRoutes.Streaming.Countries(countryCodes);
 		await foreach (var dto in channel
-			               .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
-			               .ConfigureAwait(false))
+						   .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
+						   .ConfigureAwait(false))
 		{
 			yield return dto.ToDomain();
 		}
@@ -55,8 +55,8 @@ internal sealed class StreamRepository(StreamingChannel channel) : IStreamReposi
 	{
 		var route = ShodanRoutes.Streaming.Ports(ports);
 		await foreach (var dto in channel
-			               .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
-			               .ConfigureAwait(false))
+						   .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
+						   .ConfigureAwait(false))
 		{
 			yield return dto.ToDomain();
 		}
@@ -68,8 +68,8 @@ internal sealed class StreamRepository(StreamingChannel channel) : IStreamReposi
 	{
 		var route = ShodanRoutes.Streaming.Vulnerabilities(cveIds);
 		await foreach (var dto in channel
-			               .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
-			               .ConfigureAwait(false))
+						   .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
+						   .ConfigureAwait(false))
 		{
 			yield return dto.ToDomain();
 		}
@@ -81,8 +81,8 @@ internal sealed class StreamRepository(StreamingChannel channel) : IStreamReposi
 	{
 		var route = ShodanRoutes.Streaming.Custom(query);
 		await foreach (var dto in channel
-			               .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
-			               .ConfigureAwait(false))
+						   .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
+						   .ConfigureAwait(false))
 		{
 			yield return dto.ToDomain();
 		}
@@ -93,8 +93,8 @@ internal sealed class StreamRepository(StreamingChannel channel) : IStreamReposi
 	{
 		var route = ShodanRoutes.Streaming.AllAlerts();
 		await foreach (var dto in channel
-			               .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
-			               .ConfigureAwait(false))
+						   .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
+						   .ConfigureAwait(false))
 		{
 			yield return dto.ToDomain();
 		}
@@ -106,8 +106,8 @@ internal sealed class StreamRepository(StreamingChannel channel) : IStreamReposi
 	{
 		var route = ShodanRoutes.Streaming.Alert(alertId);
 		await foreach (var dto in channel
-			               .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
-			               .ConfigureAwait(false))
+						   .StreamNdjsonAsync(route, ShodanJsonContext.Default.BannerDto, cancellationToken)
+						   .ConfigureAwait(false))
 		{
 			yield return dto.ToDomain();
 		}

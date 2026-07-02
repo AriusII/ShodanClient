@@ -53,7 +53,7 @@ public sealed partial class AccountSessionService : ObservableObject, IAccountSe
 		lock (_gate)
 		{
 			if (!force && _inFlightRefresh is null && LastRefreshedAt is { } last &&
-			    DateTimeOffset.UtcNow - last < CoalesceWindow)
+				DateTimeOffset.UtcNow - last < CoalesceWindow)
 			{
 				return;
 			}

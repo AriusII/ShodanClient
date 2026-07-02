@@ -38,7 +38,7 @@ internal sealed class StreamService(IStreamRepository repository) : IStreamServi
 	{
 		var targets = Guard.NotNullOrEmpty(countryCodes as IReadOnlyList<string> ?? countryCodes?.ToList());
 		await foreach (var banner in repository.StreamByCountriesAsync(targets, cancellationToken)
-			               .ConfigureAwait(false))
+						   .ConfigureAwait(false))
 		{
 			yield return banner;
 		}
@@ -61,7 +61,7 @@ internal sealed class StreamService(IStreamRepository repository) : IStreamServi
 	{
 		var targets = Guard.NotNullOrEmpty(cveIds as IReadOnlyList<string> ?? cveIds?.ToList());
 		await foreach (var banner in repository.StreamByVulnerabilitiesAsync(targets, cancellationToken)
-			               .ConfigureAwait(false))
+						   .ConfigureAwait(false))
 		{
 			yield return banner;
 		}

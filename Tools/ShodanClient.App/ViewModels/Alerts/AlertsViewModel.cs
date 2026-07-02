@@ -163,7 +163,7 @@ public sealed partial class AlertsViewModel : ModuleViewModelBase
 
 		var expiresSeconds = 0;
 		if (!string.IsNullOrWhiteSpace(NewAlertExpiresSecondsInput) &&
-		    !int.TryParse(NewAlertExpiresSecondsInput, out expiresSeconds))
+			!int.TryParse(NewAlertExpiresSecondsInput, out expiresSeconds))
 		{
 			throw new ShodanRequestValidationException(
 				"Expiration must be a whole number of seconds.",

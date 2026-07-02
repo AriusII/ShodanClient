@@ -203,7 +203,7 @@ public sealed partial class ScansViewModel : ModuleViewModelBase
 
 		Protocols.Clear();
 		foreach (var (name, description) in protocolsTask.Result.OrderBy(entry => entry.Key,
-			         StringComparer.OrdinalIgnoreCase))
+					 StringComparer.OrdinalIgnoreCase))
 		{
 			Protocols.Add(new ProtocolInfo(name, description));
 		}

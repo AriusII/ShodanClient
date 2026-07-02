@@ -175,7 +175,7 @@ public sealed class SearchServiceTests
 		async Task Act()
 		{
 			await foreach (var _ in service.SearchAllAsync(" ",
-				               cancellationToken: TestContext.Current.CancellationToken))
+							   cancellationToken: TestContext.Current.CancellationToken))
 			{
 			}
 		}
@@ -193,7 +193,7 @@ public sealed class SearchServiceTests
 		async Task Act()
 		{
 			await foreach (var _ in service.SearchAllAsync(
-				               "port:80", 0, cancellationToken: TestContext.Current.CancellationToken))
+							   "port:80", 0, cancellationToken: TestContext.Current.CancellationToken))
 			{
 			}
 		}
@@ -216,7 +216,7 @@ public sealed class SearchServiceTests
 
 		var results = new List<Banner>();
 		await foreach (var banner in service.SearchAllAsync(
-			               "port:80", cancellationToken: TestContext.Current.CancellationToken))
+						   "port:80", cancellationToken: TestContext.Current.CancellationToken))
 		{
 			results.Add(banner);
 		}
@@ -241,7 +241,7 @@ public sealed class SearchServiceTests
 
 		var results = new List<Banner>();
 		await foreach (var banner in service.SearchAllAsync(
-			               "port:80", maxPages: 1, cancellationToken: TestContext.Current.CancellationToken))
+						   "port:80", maxPages: 1, cancellationToken: TestContext.Current.CancellationToken))
 		{
 			results.Add(banner);
 		}

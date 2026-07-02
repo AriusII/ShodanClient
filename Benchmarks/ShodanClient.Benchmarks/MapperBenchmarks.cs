@@ -189,7 +189,7 @@ public class MapperBenchmarks
 					Expires = "20250101000000Z",
 					SignatureAlgorithm = "sha256WithRSAEncryption",
 					Issuer = new Dictionary<string, string>
-						{ ["C"] = "US", ["O"] = "Example CA", ["CN"] = "Example CA" },
+					{ ["C"] = "US", ["O"] = "Example CA", ["CN"] = "Example CA" },
 					Subject = new Dictionary<string, string> { ["CN"] = "dns.google" },
 					Fingerprint = new Dictionary<string, string> { ["sha256"] = "ab:cd:ef:01:23:45:67:89" }
 				},

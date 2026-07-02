@@ -28,7 +28,7 @@ public sealed partial class SettingsViewModel : ModuleViewModelBase
 		SettingsService = settingsService;
 		Title = "Settings";
 		MaxRetriesInput = settingsService.Current.Resilience?.MaxRetries?.ToString(CultureInfo.InvariantCulture) ??
-		                  string.Empty;
+						  string.Empty;
 		PermitsPerSecondInput =
 			settingsService.Current.RateLimit?.PermitsPerSecond?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
 
@@ -235,7 +235,7 @@ public sealed partial class SettingsViewModel : ModuleViewModelBase
 		if (!string.IsNullOrWhiteSpace(MaxRetriesInput))
 		{
 			if (!int.TryParse(MaxRetriesInput, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ||
-			    parsed < 0)
+				parsed < 0)
 			{
 				AdvancedErrorMessage = "Max retries must be a whole number of 0 or more.";
 				return;
@@ -248,7 +248,7 @@ public sealed partial class SettingsViewModel : ModuleViewModelBase
 		if (!string.IsNullOrWhiteSpace(PermitsPerSecondInput))
 		{
 			if (!int.TryParse(PermitsPerSecondInput, NumberStyles.Integer, CultureInfo.InvariantCulture,
-				    out var parsed) || parsed < 1)
+					out var parsed) || parsed < 1)
 			{
 				AdvancedErrorMessage = "Permits per second must be a whole number of 1 or more.";
 				return;

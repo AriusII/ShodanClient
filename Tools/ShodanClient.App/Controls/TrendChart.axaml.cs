@@ -177,7 +177,7 @@ public partial class TrendChart : UserControl
 	private static IBrush ResolveAccentBrush()
 	{
 		if (AvaloniaApplication.Current?.TryFindResource("ShodanAccentBrush", out var resource) == true &&
-		    resource is IBrush brush)
+			resource is IBrush brush)
 		{
 			return brush;
 		}
@@ -188,7 +188,7 @@ public partial class TrendChart : UserControl
 	private static double ResolveLabelFontSize()
 	{
 		if (AvaloniaApplication.Current?.TryFindResource("ShodanFontSizeSmall", out var resource) == true &&
-		    resource is double size)
+			resource is double size)
 		{
 			return size;
 		}

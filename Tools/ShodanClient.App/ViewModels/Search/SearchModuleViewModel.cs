@@ -307,8 +307,8 @@ public sealed partial class SearchModuleViewModel : ModuleViewModelBase, INaviga
 		}
 
 		if (!AppliedFilters.Any(chip =>
-			    string.Equals(chip.Name, name, StringComparison.OrdinalIgnoreCase) &&
-			    string.Equals(chip.Value, value, StringComparison.Ordinal)))
+				string.Equals(chip.Name, name, StringComparison.OrdinalIgnoreCase) &&
+				string.Equals(chip.Value, value, StringComparison.Ordinal)))
 		{
 			AppliedFilters.Add(new FilterChip(name, value));
 		}
@@ -344,8 +344,8 @@ public sealed partial class SearchModuleViewModel : ModuleViewModelBase, INaviga
 	private async Task UseFacetValueAsync(FacetValueRow row)
 	{
 		if (!AppliedFilters.Any(chip =>
-			    string.Equals(chip.Name, row.FacetName, StringComparison.OrdinalIgnoreCase) &&
-			    string.Equals(chip.Value, row.Value, StringComparison.Ordinal)))
+				string.Equals(chip.Name, row.FacetName, StringComparison.OrdinalIgnoreCase) &&
+				string.Equals(chip.Value, row.Value, StringComparison.Ordinal)))
 		{
 			AppliedFilters.Add(new FilterChip(row.FacetName, row.Value));
 		}
